@@ -18,6 +18,19 @@ docker version
 
 Docker deve mostrar **cliente e servidor**. Se faltar o comando ou a conexão com o daemon falhar, corrija o runtime antes de iniciar Supabase. Consulte a [instalação oficial](https://docs.docker.com/get-started/get-docker/) e o [guia da CLI Supabase](https://supabase.com/docs/guides/local-development/cli/getting-started). Não é necessário login na Supabase nem projeto cloud para executar localmente.
 
+## Alternativa no Ubuntu/WSL 2 com systemd
+
+Docker Engine pode executar dentro da distribuição, sem Docker Desktop. No Ubuntu 24.04 desta validação, o pacote `docker.io` forneceu Docker 29.1.3:
+
+```sh
+sudo apt-get update
+sudo apt-get install docker.io
+sudo systemctl enable --now docker
+sudo usermod -aG docker "$USER"
+```
+
+Abra uma nova sessão de terminal após adicionar o grupo e confira `docker version`. Na sessão atual, `sg docker -c 'docker version'` aplica o grupo para um comando; o mesmo funciona para `sg docker -c 'npm run supabase:start'`. O grupo Docker concede controle administrativo do host; adicione somente desenvolvedores que já tenham esse acesso. Não instale esta alternativa em paralelo com uma integração Docker Desktop já configurada.
+
 ## Primeira execução
 
 ```sh
@@ -44,9 +57,9 @@ npm run check:connection
 npm run dev
 ```
 
-Abra <http://127.0.0.1:3000>. A página consulta Auth e a API REST do PostgreSQL pelo servidor, sem cache, e mostra somente um diagnóstico fixo. Use “Verificar novamente” para refazer a consulta. Reinicie o Next.js após alterar o ambiente. O comando `check:connection` reutiliza a mesma verificação e retorna código 1 se configuração/conexão falharem.
+Abra <http://127.0.0.1:3000>. A página consulta Auth, a API REST do PostgreSQL e Storage pelo servidor, sem cache, e mostra somente um diagnóstico fixo. Use “Verificar novamente” para refazer a consulta. Reinicie o Next.js após alterar o ambiente. O comando `check:connection` reutiliza a mesma verificação e retorna código 1 se configuração/conexão falharem.
 
-O diagnóstico acessa `/auth/v1/health` e o documento OpenAPI de `/rest/v1/`, com chave pública, limite de cinco segundos por requisição e sem seguir redirecionamentos. Nenhuma tabela de aplicação é consultada. Isso comprova a disponibilidade inicial dos serviços, não autenticação de usuários nem isolamento de dados, entregues em BT-003 e seguintes. Nesta entrega são aceitas apenas URLs locais em `localhost` ou `127.0.0.1`, porta 54321; a seleção cloud pertence a BT-002.
+O diagnóstico acessa `/auth/v1/health`, o documento OpenAPI de `/rest/v1/` e a listagem autorizada de buckets em `/storage/v1/bucket`, com chave pública, limite de cinco segundos por requisição e sem seguir redirecionamentos. A resposta de Storage é descartada após validar o formato; nomes de buckets não são exibidos. Essa consulta rejeita chave inválida, enquanto health/OpenAPI locais também respondem sem chave. Nenhuma tabela de aplicação é consultada. Isso comprova a disponibilidade inicial dos serviços, não autenticação de usuários nem isolamento de dados, entregues em BT-003 e seguintes. Nesta entrega são aceitas apenas URLs locais em `localhost` ou `127.0.0.1`, porta 54321; a seleção cloud pertence a BT-002.
 
 ## Verificações
 
@@ -69,7 +82,7 @@ Para encerrar o desenvolvimento, interrompa Next.js com Ctrl+C e execute:
 npm run supabase:stop
 ```
 
-O comando preserva os dados locais. Não adicione `--no-backup` para encerrar normalmente. A stack contém Storage, mas a funcionalidade de anexos ainda não está implementada.
+A parada e o reinício foram verificados com um registro descartável em esquema privado; o registro permaneceu após reiniciar. O comando preserva os dados locais. Não adicione `--no-backup` para encerrar normalmente. A stack contém Storage, mas a funcionalidade de anexos ainda não está implementada.
 
 ## Diagnóstico
 
