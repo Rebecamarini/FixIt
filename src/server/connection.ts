@@ -38,7 +38,7 @@ export async function checkConnection(
     };
   }
   try {
-    const responses = await Promise.all(["/auth/v1/health", "/rest/v1/"].map(async (path) => {
+    const responses = await Promise.all(["/auth/v1/health", "/rest/v1/", "/storage/v1/bucket"].map(async (path) => {
       const response = await fetch(new URL(path, env.SUPABASE_URL), {
         headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY!, Accept: "application/json" },
         cache: "no-store",
@@ -48,13 +48,13 @@ export async function checkConnection(
       if (!response.ok) throw new Error("Service unavailable");
       return response.json();
     }));
-    const [auth, api] = responses;
-    if (auth.name !== "GoTrue" || api.swagger !== "2.0" || !api.paths) {
+    const [auth, api, buckets] = responses;
+    if (auth.name !== "GoTrue" || api.swagger !== "2.0" || !api.paths || !Array.isArray(buckets)) {
       throw new Error("Unexpected service response");
     }
     return {
       status: "connected",
-      message: "Conexão local verificada: Auth e API do PostgreSQL respondem pelo servidor.",
+      message: "Conexão local verificada: Auth, API do PostgreSQL e Storage respondem pelo servidor.",
     };
   } catch {
     return {

@@ -2,9 +2,27 @@
 
 Verificação em 2026-10-17, referente a [BT-001](https://trello.com/c/n4BRJlnF), na branch `main`. O cartão foi consultado ao vivo, com descrição, responsáveis, comentários e checklists: estava em Pronto para Implementação, sem membros, comentários ou checklists adicionais. Foi movido para Em Implementação.
 
-## Resultado
+## Atualização — integração local aprovada
 
-**Implementação disponível, aceite de integração pendente.** Não declarar BT-001 concluído: o ambiente não tem Docker/Podman nem socket Docker, portanto a stack real não foi iniciada e o caminho positivo não foi comprovado.
+Continuação em 2026-10-17 na branch `ticket/bt-001-runtime`, baseada na integração da SPEC-001. O impedimento abaixo foi resolvido: Docker Engine 29.1.3 foi instalado pelo pacote Ubuntu `docker.io` no WSL 2 com systemd, com daemon iniciado e usuário no grupo Docker. A sessão existente usa `sg docker -c 'comando'`; uma nova sessão recebe o grupo normalmente. O [guia local](desenvolvimento-local.md) e o [guia da equipe](inicio-equipe.md) registram a alternativa.
+
+| Verificação real | Resultado |
+| --- | --- |
+| Instalação limpa | `npm ci` reinstalou as dependências fixadas com sucesso. |
+| Stack completa | `npm run supabase:start` terminou com código 0, sem excluir serviços nem ignorar saúde. PostgreSQL 17.11.0.004, GoTrue 2.197.0, PostgREST 16.4 e Storage 1.82.1 em execução; os 12 containers iniciaram, todos os que possuem healthcheck ficaram saudáveis. |
+| Ambiente | URL e chave Publishable reais obtidas da CLI, gravadas em `.env.local` ignorado e sem exibir credenciais. Nenhuma chave administrativa usada pela aplicação. |
+| Diagnóstico e integração | `check:connection` e o teste de integração passaram com Auth/API reais, antes e após reiniciar a stack; zero mocks e zero skips. O teste de chave inválida revelou que health/OpenAPI locais aceitam qualquer chave; o diagnóstico passou a consultar também a listagem autorizada de buckets em Storage, que rejeita a chave falsa. Nenhum conteúdo retornado é exibido pela aplicação. O teste de integração havia falhado antes da configuração real. |
+| PostgreSQL/Storage | Consulta SQL real aprovada e `/storage/v1/status` respondeu HTTP 200. |
+| Aplicação | Build de produção aprovado; `npm start` e requisição real a `/` retornaram HTTP 200 e mensagem de conexão local verificada. |
+| Persistência | `supabase:stop` normal e `supabase:start` restauraram o backup. Um registro descartável em esquema privado manteve o valor `preservado` após o ciclo. O esquema foi removido após a consulta, sem deixar fixtures fora de migrations. |
+| Checks | Lint, TypeScript, quatro testes de diagnóstico, teste de integração real e build aprovados. |
+| Recursos | WSL com 7,6 GiB de RAM e 2 GiB de swap suportou a stack completa. O primeiro download/extração consumiu aproximadamente 7,6 GiB de cache; os reinícios reutilizaram imagens. |
+
+BT-001 tem o caminho positivo local comprovado. Sessões, perfis, isolamento e contratos de negócio continuam nos cartões dependentes. O acesso anônimo ao OpenAPI funciona nesta stack local; o [changelog de fevereiro](https://supabase.com/changelog/42949-breaking-change-removing-access-to-openapi-spec-via-the-anon-key) restringe essa consulta no cloud, cuja adaptação pertence a BT-002.
+
+## Registro anterior — impedimento superado
+
+Na primeira execução, a implementação estava disponível e o aceite de integração permanecia pendente: o ambiente ainda não tinha Docker/Podman nem socket Docker. A tabela abaixo preserva o resultado histórico anterior à atualização acima.
 
 | Verificação | Resultado observado |
 | --- | --- |
@@ -23,7 +41,7 @@ Verificação em 2026-10-17, referente a [BT-001](https://trello.com/c/n4BRJlnF)
 
 O sandbox precisou de autorização para acesso npm, pasta de configuração `~/.supabase`, subprocessos do build e escuta HTTP. A falha do runtime foi confirmada fora do sandbox; não é apenas uma limitação de rede do agente.
 
-## Retomar o aceite
+## Sequência usada para retomar o aceite
 
 1. Instalar/iniciar um runtime compatível com Docker e confirmar cliente **e servidor** com `docker version`. No WSL, habilitar a integração da distribuição.
 2. Seguir o [guia local](desenvolvimento-local.md): `npm ci`, `npm run supabase:start`, `.env.local` com URL e chave Publishable/anon locais reais.

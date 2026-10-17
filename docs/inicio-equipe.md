@@ -18,7 +18,7 @@ Leia o [README](../README.md), as [decisões da base técnica](base-tecnica.md) 
 
 Instale [Git](https://git-scm.com/downloads), [Node.js](https://nodejs.org/en/download) com npm e um runtime de containers. Quando a base estiver integrada, use a versão de Node fixada pelo projeto. Antes disso, a CLI Supabase exige Node 20 ou superior; a versão definitiva será fixada na implementação, não individualmente por cada pessoa. [Requisito oficial](https://supabase.com/docs/guides/local-development/cli/getting-started)
 
-No Windows, use [Docker Desktop com WSL 2](https://docs.docker.com/desktop/setup/install/windows-install/). Se desenvolver dentro do WSL, habilite a integração do Docker Desktop com essa distribuição e execute Git, Node e npm no mesmo ambiente em que o agente trabalha. Em Linux/macOS, use um runtime compatível com a API Docker conforme o [guia local do Supabase](https://supabase.com/docs/guides/local-development).
+No Windows, use [Docker Desktop com WSL 2](https://docs.docker.com/desktop/setup/install/windows-install/) ou Docker Engine dentro do Ubuntu/WSL com systemd, conforme a alternativa validada no [guia local](desenvolvimento-local.md#alternativa-no-ubuntuwsl-2-com-systemd). Se desenvolver dentro do WSL, habilite a integração do Docker Desktop com essa distribuição e execute Git, Node e npm no mesmo ambiente em que o agente trabalha. Em Linux/macOS, use um runtime compatível com a API Docker conforme o [guia local do Supabase](https://supabase.com/docs/guides/local-development).
 
 No terminal de desenvolvimento, confira:
 
