@@ -1,30 +1,29 @@
-# Issue tracker: GitHub
+# Issue tracker: Trello
 
-Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Tasks, stories, sprint planning, and scope decisions live in the
+[Backlog do Produto — FixIt](https://trello.com/b/SsT0I7Di/backlog-do-produto-fixit).
+GitHub hosts code and pull requests.
 
-## Conventions
+## Before implementing
 
-- Create: `gh issue create --title "..." --body "..."`
-- Read: `gh issue view <number> --json number,title,body,labels,comments`
-- List: `gh issue list --state open --json number,title,body,labels,comments`
-- Comment: `gh issue comment <number> --body "..."`
-- Apply/remove labels: `gh issue edit <number> --add-label "..."` or `--remove-label "..."`
-- Close: `gh issue close <number> --comment "..."`
-- Create a sub-issue: `gh issue create --parent <parent> ...`
-
-Infer the repository from `git remote -v`.
-
-## Pull requests as a triage surface
-
-**PRs as a request surface: no.**
+- Read the live target card, including checklists and relevant comments, through the connected Trello tools.
+- Read DEC-001 (scope) and DEC-002 (Sprint 1) when relevant; links and a dated snapshot are in `docs/references/`.
+- Preserve identifiers such as US-001 and S1-J01 and link the original card in implementation notes and PRs.
+- Confirm the current list and assignment. Descriptions and member assignments can disagree.
+- If live access is unavailable, use the snapshot as historical context and report that the current state could not be verified.
 
 ## Skill conventions
 
-When a skill says “publish to the issue tracker”, create a GitHub issue.
+“Fetch the relevant ticket” means read its Trello card. When explicitly asked to
+publish a spec or tickets, use cards on this board and link the parent spec.
+Record blockers as `Blocked by: <card URL>` when native dependencies are unavailable;
+check every blocker before starting dependent work.
 
-When a skill says “fetch the relevant ticket”, read the corresponding GitHub issue.
+Use the existing lists for planning and progress: Dúvidas/Decisões, Backlog do
+Produto, Pronto para Implementação, Sprint 1 — Rebeca/João/Paulo,
+Em Implementação, Code Review, Em Teste, and Concluído.
+Completion requires the card's acceptance criteria, including integration where specified.
+Create, move, or modify cards within the user's requested task.
 
-## Blocking relationships
-
-Prefer GitHub’s native issue dependencies. If unavailable, add a
-`Blocked by: #<number>` line to the child issue.
+The GitHub label mapping in `triage-labels.md` is separate from Trello's existing
+product labels and lists; it does not replace them.
