@@ -32,6 +32,15 @@ O sandbox precisou de autorização para acesso npm, pasta de configuração `~/
 
 Os testes não substituem serviços por mocks e não pulam a integração quando faltam pré-requisitos. Contas/sessões reais e isolamento são entregas dos próximos cartões. Documentação escrita e build aprovado não equivalem ao aceite da stack.
 
+## Revisão
+
+Aplicada a skill `code-review` com dois agentes independentes, comparando `58bdbc260ec05171dc0dbf7975fc262363006df5...2c5e5f2`:
+
+- **Padrões:** zero achados; arquitetura, versões fixadas, ambiente e diagnóstico seguros seguem as instruções do repositório.
+- **Especificação:** zero defeitos de código ou aumento de escopo; um bloqueio operacional de aceite, a conexão bem-sucedida com a stack real ainda não verificada.
+
+As alterações de documentação que já existiam no workspace foram preservadas fora do commit. O guia local entregue neste cartão está versionado; o link acrescentado ao guia da equipe existente permanece junto das alterações anteriores desse arquivo.
+
 ## Fontes técnicas consultadas
 
 - [Next.js: instalação e App Router](https://nextjs.org/docs/app/getting-started/installation).
