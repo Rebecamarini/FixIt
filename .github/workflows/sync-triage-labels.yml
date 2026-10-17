@@ -1,0 +1,46 @@
+name: Sync triage labels
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/sync-triage-labels.yml
+      - docs/agents/triage-labels.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Create missing labels
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          existing_labels="$(gh label list --limit 200 --json name --jq '.[].name')"
+
+          ensure_label() {
+            local name="$1"
+            local color="$2"
+            local description="$3"
+
+            if [[ $'\n'"$existing_labels"$'\n' == *$'\n'"$name"$'\n'* ]]; then
+              echo "Label already exists: $name"
+              return
+            fi
+
+            gh label create "$name" --color "$color" --description "$description"
+          }
+
+          ensure_label needs-triage FBCA04 "Maintainer needs to evaluate this issue"
+          ensure_label needs-info D4C5F9 "Waiting on reporter for more information"
+          ensure_label ready-for-agent 0E8A16 "Fully specified, ready for an AFK agent"
+          ensure_label ready-for-human 1D76DB "Requires human implementation"
+          ensure_label wontfix FFFFFF "Will not be actioned"
