@@ -1,0 +1,3 @@
+.main { max-width: 48rem; margin: 0 auto; padding: clamp(1.5rem, 5vw, 4rem); }
+.brand { font-size: 1.2rem; font-weight: 750; color: #075b72; }
+.connection { margin-top: 2.5rem; padding: 1.5rem; border: 1px solid #c5d4db; border-radius: 0.75rem; background: white; overflow-wrap: anywhere; }
