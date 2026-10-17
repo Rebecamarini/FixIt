@@ -30,8 +30,9 @@ autores presentes nos originais permanecem nas cópias.
 
 ## Divergências antes de implementar
 
-- O README da raiz ainda descreve Spring Boot e React/Flutter separados. O Trabalho 01 editado propõe React com Supabase; o Trabalho 02 explicita Next.js e Supabase substituindo Spring Boot. Leia essa evolução antes de escolher a estrutura de implementação.
-- DEC-001 limita o produto a uma aplicação web responsiva e exclui integrações externas, aplicativo separado, notificações externas e armazenamento externo. O Trabalho 02 propõe Supabase gerenciado, incluindo Auth e Storage. Alinhe a compatibilidade dessas escolhas com DEC-001 antes de implementar os serviços afetados; esta importação não resolve o conflito.
+- O README antigo descrevia Spring Boot e React/Flutter separados. O usuário confirmou Next.js com Supabase em 2026-10-17; a arquitetura vigente está no [ADR 0001](../adr/0001-nextjs-supabase.md) e no [README da raiz](../../README.md).
+- A redação da DEC-001 exclui APIs e armazenamento externos, enquanto o Trabalho 02 propõe Supabase gerenciado. Em 2026-10-17, o usuário confirmou Supabase como infraestrutura do próprio FixIt, permitindo Auth, banco e futuramente Storage. A exceção está registrada no ADR 0001; o cartão ainda não foi atualizado.
+- BCE/Singleton e a comunicação direta navegador–Supabase nos trabalhos anteriores são históricos. O usuário confirmou operações de dados pelo servidor Next.js e adaptação de BCE por responsabilidades, sem classes/Singleton obrigatórios. Consulte o [registro da entrevista](../base-tecnica.md); as cópias importadas permanecem preservadas.
 - DEC-002 distribui frentes completas entre João (usuários/autenticação), Paulo (criação/envio) e Rebeca (consulta/autorização). Alguns membros dos cartões divergem do responsável escrito na descrição. Confirme a atribuição no início da tarefa.
 - DEC-002 diz que as datas estão a definir, embora existam vencimentos nos cartões. Não trate esses vencimentos como cronograma confirmado.
 - Na Sprint 1, autorização e histórico são entregas parciais; anexos ficam para sprint futura e notificações ao Gestor permanecem pendentes com US-012. Leia o recorte da sprint além da história completa.
