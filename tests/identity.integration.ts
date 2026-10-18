@@ -84,3 +84,54 @@ test("cada sessão vê somente o próprio perfil; logout remove a identidade rec
     await admin.auth.admin.deleteUser(b.data.user.id);
   }
 });
+
+
+test("cadastro aplica trim JavaScript ao nome e matrícula, recusando vazios e duplicatas equivalentes", async (t) => {
+  const admin = localAdmin();
+  // Todos os caracteres removidos por String.prototype.trim(), inclusive BOM e NBSP.
+  const whitespace = "\u0009\u000a\u000b\u000c\u000d\u0020\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff";
+  for (const field of ["nome", "matricula"]) {
+    await t.test(`${field} composto apenas por BOM é recusado`, async () => {
+      const input = uniqueSignup();
+      Reflect.set(input.options.data, field, "\ufeff");
+      const result = await createRequestClient(cookieJar()).auth.signUp(input);
+      try { assert.ok(result.error); }
+      finally { if (result.data.user) await admin.auth.admin.deleteUser(result.data.user.id); }
+    });
+  }
+  await t.test("pontas normalizadas e matrícula equivalente não duplica", async () => {
+    const client = createRequestClient(cookieJar());
+    const input = uniqueSignup();
+    const matricula = input.options.data.matricula.trim();
+    input.options.data.nome = `${whitespace}Pessoa fictícia${whitespace}`;
+    input.options.data.matricula = `${whitespace}${matricula}${whitespace}`;
+    const first = await client.auth.signUp(input);
+    assert.equal(first.error, null);
+    assert.ok(first.data.user);
+    try {
+      const profile = await client.from("perfis").select("nome, matricula").single();
+      assert.equal(profile.error, null);
+      assert.deepEqual(profile.data, { nome: "Pessoa fictícia", matricula });
+      const duplicate = uniqueSignup();
+      duplicate.options.data.matricula = `\ufeff${matricula.toLowerCase()}\u00a0`;
+      const result = await createRequestClient(cookieJar()).auth.signUp(duplicate);
+      try { assert.ok(result.error); }
+      finally { if (result.data.user) await admin.auth.admin.deleteUser(result.data.user.id); }
+    } finally { await admin.auth.admin.deleteUser(first.data.user.id); }
+  });
+});
+
+test("cadastro exige nome e matrícula JSON textuais, sem coerção", async (t) => {
+  const admin = localAdmin();
+  for (const field of ["nome", "matricula"]) {
+    for (const value of [123, true, ["texto"], { valor: "texto" }]) {
+      await t.test(`${field}: ${JSON.stringify(value)}`, async () => {
+        const input = uniqueSignup();
+        Reflect.set(input.options.data, field, value);
+        const result = await createRequestClient(cookieJar()).auth.signUp(input);
+        try { assert.ok(result.error); }
+        finally { if (result.data.user) await admin.auth.admin.deleteUser(result.data.user.id); }
+      });
+    }
+  }
+});

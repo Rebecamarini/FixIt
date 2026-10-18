@@ -41,6 +41,49 @@ A suíte também testa preservação de solicitação fictícia adicional durant
 repetição da carga e remove somente seus dados temporários. Nenhuma validação
 destrutiva foi executada no cloud.
 
+## Correções da revisão final local — 2026-10-18
+
+A revisão de padrões não encontrou problemas; a revisão da especificação encontrou
+dois achados P2, ambos corrigidos: trim Unicode incompleto e coerção de metadados
+JSON não textuais em nome/matrícula. As pendências remotas abaixo continuam abertas.
+
+Duas regressões pela fronteira aprovada Auth/API/PostgreSQL foram executadas antes
+das correções. BOM isolado nos dois campos e normalização de pontas falharam;
+números, booleanos, arrays e objetos nos dois campos foram indevidamente aceitos
+(oito casos). Cada ciclo passou após sua migration. Contas inesperadamente aceitas
+na fase vermelha foram removidas pelo cleanup dos próprios testes.
+
+As novas migrations `20261018152845_identity_javascript_trim` e
+`20261018152923_identity_metadata_text` foram geradas pela CLI e aplicadas com
+`supabase migration up --local`, sem modificar as migrations integradas.
+Comparação de todas as linhas de perfis, solicitações e histórico, ordenadas por ID,
+produziu MD5 `6b8bc86d1b674de3e9a4bb6038a85e2f` antes/depois: quatro perfis,
+42 solicitações e 42 eventos preservados. Nenhum perfil é normalizado silenciosamente:
+constraints novas falham se dados existentes exigirem reconciliação administrativa.
+
+Depois dessa comprovação incremental, um reset **somente local** aplicou as quatro
+migrations desde banco vazio para verificar reconstrução. A reprodução anterior
+por clone limpo permanece como evidência histórica do SHA indicado acima; esta
+rodada usa worktree próprio derivado de `integration/spec-001@417b2d8`, `npm ci`
+e ambiente local privado `0600`. Não representa novo clone limpo.
+
+A primeira tentativa de `npm run verify` fora de `sg docker` passou lint, tipos,
+build, cinco unitários e 25/26 testes de integração; a preparação em processo filho
+falhou por falta do grupo Docker ativo. A execução completa foi repetida com
+`sg docker -c 'npm run verify'`, como orienta o guia local.
+Resultado final: lint, tipos, build, cinco unitários e 26 integrações (15 testes
+principais e 11 subtestes) aprovados, sem falhas/skips. Advisors locais de segurança
+e desempenho retornaram zero achados. `npm ci` manteve o lockfile e instalou 364
+pacotes; as cinco vulnerabilidades high existentes permanecem fora deste ajuste.
+
+Após o rebuild e a suíte, duas execuções explícitas de `prepare:test-data`
+autenticaram as quatro contas e preservaram quatro perfis, 42 solicitações e
+42 eventos. O MD5 das linhas ordenadas nas duas leituras foi
+`7d78fb823879b1a4b1a6b443de81fb70` (novo conjunto após reset local; não se compara
+aos IDs anteriores). Os 12 containers completos continuam em execução. Nenhuma
+migration, preparação ou operação destrutiva foi feita no cloud; sem push remoto.
+
+
 ## Ferramentas do agente e conexões
 
 | Acesso | Verificação nesta sessão | O que ainda não comprova |
