@@ -1,6 +1,8 @@
 # SPEC-001 — Base técnica executável do FixIt
 
-Status: **ready-for-agent**. Grill encerrado em 2026-10-17, incluindo CI/CD e guia da equipe. Especificação ainda não implementada.
+Status de execução em **2026-10-18: em implementação, aceite parcial**. BT-001 a BT-005 implementados na integração local; BT-006 preparado, bloqueado por acesso GitHub para publicação, secrets e execução remota. BT-007 consolida o guia e a reprodução local, sem prontidão completa. Consulte a [validação da SPEC-001](../validacao-spec-001.md).
+
+Os requisitos abaixo preservam a especificação aprovada no grill de 2026-10-17, originalmente `ready-for-agent`. As notas da entrevista no final são históricas; o estado operacional atual está no registro de validação.
 
 ## Problem Statement
 

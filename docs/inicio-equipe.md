@@ -1,6 +1,6 @@
 # Começar a desenvolver no FixIt
 
-Guia para Rebeca e Paulo, atualizado em 2026-10-17. Cada pessoa configura as ferramentas e autoriza as conexões na própria conta. Clonar o repositório traz a documentação, mas não instala skills nem conecta serviços ao agente.
+Guia para Rebeca e Paulo, atualizado em 2026-10-18. Cada pessoa configura as ferramentas e autoriza as conexões na própria conta. Clonar o repositório traz a documentação, mas não instala skills nem conecta serviços ao agente.
 
 ## 1. Entender o que já foi definido
 
@@ -12,11 +12,19 @@ Leia o [README](../README.md), as [decisões da base técnica](base-tecnica.md) 
 | Criação e envio | Paulo | [S1-P01](https://trello.com/c/NO7qMjHP): solicitação e evento inicial |
 | Consulta e autorização | Rebeca | [S1-R01](https://trello.com/c/OaAB6z5B): leitura, isolamento e dados de teste |
 
-**Estado atual:** o grill está concluído, mas a base ainda não foi implementada. Ainda faltam aplicação, dependências, configuração local, projeto cloud, migrations, contas de teste e CI/CD. É possível preparar as ferramentas e conexões abaixo agora; os passos de execução da aplicação dependem da entrega da base. Configurar uma conta não significa que a integração foi testada.
+**Estado atual:** BT-001 a BT-005 estão implementados na integração local da
+SPEC-001: aplicação, stack local, identidade, criação, consulta e dados fictícios.
+O cloud `fixit-dev` existe em São Paulo (`gifqssocvuieagmndxwy`), mas ainda não
+recebeu as migrations de domínio nem os dados. BT-006 tem workflow preparado;
+a conta GitHub `Jrmelo317` consultada continua sem push/administração/secrets.
+A base ainda não foi integrada à `main` remota nem teve CI/CD remoto comprovado.
+BT-007 e a prontidão completa permanecem parciais até resolver esse bloqueio.
+O [registro de validação](validacao-spec-001.md) distingue execução local,
+conexões verificadas e autorizações pessoais ainda não conferidas.
 
 ## 2. Preparar a máquina e o GitHub
 
-Instale [Git](https://git-scm.com/downloads), [Node.js](https://nodejs.org/en/download) com npm e um runtime de containers. Quando a base estiver integrada, use a versão de Node fixada pelo projeto. Antes disso, a CLI Supabase exige Node 20 ou superior; a versão definitiva será fixada na implementação, não individualmente por cada pessoa. [Requisito oficial](https://supabase.com/docs/guides/local-development/cli/getting-started)
+Instale [Git](https://git-scm.com/downloads), [Node.js](https://nodejs.org/en/download) com npm e um runtime de containers. Use Node **24.18.0** e npm **11.16.0**, fixados em `.nvmrc` e `package.json`; com nvm, execute `nvm install` e `nvm use`. A CLI Supabase **2.121.0** vem do lockfile, sem instalação global. Consulte o [guia local](desenvolvimento-local.md).
 
 No Windows, use [Docker Desktop com WSL 2](https://docs.docker.com/desktop/setup/install/windows-install/) ou Docker Engine dentro do Ubuntu/WSL com systemd, conforme a alternativa validada no [guia local](desenvolvimento-local.md#alternativa-no-ubuntuwsl-2-com-systemd). Se desenvolver dentro do WSL, habilite a integração do Docker Desktop com essa distribuição e execute Git, Node e npm no mesmo ambiente em que o agente trabalha. Em Linux/macOS, use um runtime compatível com a API Docker conforme o [guia local do Supabase](https://supabase.com/docs/guides/local-development).
 
@@ -51,11 +59,11 @@ codex plugin marketplace add mattpocock/skills --ref 49dd158d1076134a641b33efb03
 codex plugin add mattpocock-skills@mattpocock
 ```
 
-A referência fixa acima foi consultada para este guia e mantém a equipe na mesma revisão inicial. Atualizações devem ser combinadas. Os comandos `marketplace add --ref` e `plugin add` foram conferidos no `--help` do Codex desta sessão. Para outro agente, use as instruções do [autor](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/README.md); os comandos de plugin acima são específicos do Codex.
+A referência fixa acima foi consultada para este guia e mantém a equipe na mesma revisão inicial. Atualizações devem ser combinadas. Os comandos `marketplace add --ref` e `plugin add` foram reconferidos no `--help` do Codex CLI **0.163.0** em 2026-10-18; o manifesto da revisão confirma os nomes `mattpocock` e `mattpocock-skills`. A instalação não foi refeita nas contas dos colegas. Para outro agente, use as instruções do [autor](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/README.md); os comandos de plugin acima são específicos do Codex.
 
 Se essas skills já estiverem instaladas manualmente, confira a origem antes de adicionar o pacote para evitar duplicatas. Nesta sessão existem skills manuais em `~/.codex/skills`; a documentação atual também descreve descoberta em `~/.agents/skills`. Não copie o caminho absoluto de outro desenvolvedor. [Locais de skills do Codex](https://learn.chatgpt.com/docs/build-skills)
 
-Abra uma nova sessão após instalar o plugin e confirme que as skills aparecem no seletor. O pacote inclui o fluxo `ask-matt`, `grill-with-docs`, `to-spec`, `to-tickets` e `implement`, além das disciplinas `tdd`, `code-review`, `domain-modeling`, `codebase-design` e `pr`. As instruções de tracker, etiquetas e documentação já estão em [AGENTS.md](../AGENTS.md); o contexto deste projeto usa Trello, não issues de produto no GitHub.
+Abra uma nova sessão após instalar o plugin e confirme que as skills aparecem no seletor. O pacote inclui o fluxo `ask-matt`, `grill-with-docs`, `to-spec`, `to-tickets`, `implement` e `implement-spec`, além das disciplinas `tdd`, `code-review`, `domain-modeling`, `codebase-design` e `pr`. O plugin pode atualizar no início da sessão; antes de atualizar, confira a revisão efetiva e combine a mudança com a equipe. A revisão indicada é a referência inicial do guia. As instruções de tracker, etiquetas e documentação já estão em [AGENTS.md](../AGENTS.md); o contexto deste projeto usa Trello, não issues de produto no GitHub.
 
 Skills adicionais pessoais, como `ponytail` ou `no-mistakes`, não são distribuídas pelo Git deste projeto nem são pré-requisito deste guia. Se forem adotadas pela equipe, sua origem e instalação devem ser documentadas antes de depender delas.
 
@@ -65,43 +73,74 @@ Skills adicionais pessoais, como `ponytail` ou `no-mistakes`, não são distribu
 
 Skill é uma instrução de trabalho; MCP fornece ferramentas de acesso a um serviço. Plugins podem reunir ambos. Instalar um plugin não concede automaticamente acesso aos arquivos ou projetos de outra pessoa.
 
-No ChatGPT/Codex desktop, abra **Plugins**, pesquise o serviço e instale pelo botão **+** ou **Instalar**. No Codex CLI, abra `/plugins`. Complete **Conectar** quando solicitado e autentique com sua própria conta. Alguns serviços pedem conexão no primeiro uso. Abra uma nova conversa para carregar as ferramentas depois da instalação. [Instruções oficiais](https://learn.chatgpt.com/docs/plugins)
+No ChatGPT desktop, abra **Plugins**, pesquise o serviço e instale. A extensão IDE não oferece o navegador de plugins; use o desktop ou a CLI. No Codex CLI, abra `/plugins`. Complete **Conectar** quando solicitado e autentique com sua própria conta. Alguns serviços pedem conexão no primeiro uso. Abra uma nova conversa para carregar as ferramentas depois da instalação. [Instruções oficiais](https://learn.chatgpt.com/docs/plugins)
 
 | Plugin/conexão | Para que usar | Acesso a confirmar |
 | --- | --- | --- |
 | Trello | Ler tarefas, critérios, comentários e dependências | [Board do FixIt](https://trello.com/b/SsT0I7Di/backlog-do-produto-fixit) |
 | Google Drive | Consultar os documentos originais quando necessário | [Pasta do projeto](https://drive.google.com/drive/folders/19RsCtfuTNRDuvkRHMVTOGFHQsQk8NxgZ) |
 | GitHub | Consultar código, PRs e verificações pelo agente | Repositório `Rebecamarini/FixIt` e permissões da própria conta |
-| Supabase | Consultar documentação, projetos e banco pelo agente | Organização compartilhada e, após a criação, projeto `fixit-dev` |
+| Supabase | Consultar documentação, projetos e banco pelo agente | Organização compartilhada e projeto `fixit-dev` (`gifqssocvuieagmndxwy`) |
 
-O plugin Supabase inclui skills específicas de Supabase e boas práticas de PostgreSQL. A conexão do agente de João foi testada, mas isso não conecta os agentes de Rebeca e Paulo. Peçam ao administrador acesso à [organização do FixIt](https://supabase.com/dashboard/org/clpjmmkrnnuvvuwrhrgh) e, quando existir, ao projeto compartilhado. Não é necessário criar outro projeto cloud por desenvolvedor: cada um terá sua instância local.
+O plugin Supabase inclui skills específicas de Supabase e boas práticas de PostgreSQL. A conexão do agente de João foi testada, mas isso não conecta os agentes de Rebeca e Paulo. Peçam ao administrador acesso à [organização do FixIt](https://supabase.com/dashboard/org/clpjmmkrnnuvvuwrhrgh) e ao [projeto compartilhado](https://supabase.com/dashboard/project/gifqssocvuieagmndxwy). Não é necessário criar outro projeto cloud por desenvolvedor: cada um terá sua instância local.
 
 As cópias em [referências](references/README.md) permitem leitura offline, mas são históricas. Antes de implementar, o agente precisa consultar o cartão ao vivo; se não conseguir, deve informar que o estado atual não foi verificado.
 
 **Teste das conexões:** peça ao agente para ler DEC-001/DEC-002 no Trello, consultar um documento da pasta do Drive, ler os dados do repositório no GitHub e listar organizações/projetos no Supabase. São consultas de leitura; esse teste não deve criar recursos ou alterar cartões. Confira o resultado de cada serviço, não apenas se o plugin aparece instalado.
 
-## 5. Configurar a aplicação quando a base estiver integrada
+## 5. Executar a base local
 
-O primeiro caminho executável de BT-001 está no [guia de desenvolvimento local](desenvolvimento-local.md), com versões fixadas, `npm ci`, configuração de ambiente, início/parada da stack, aplicação e verificações. Siga esse guia para preparar o runtime; as demais entregas da base continuam nos cartões dependentes. A evidência e os impedimentos da execução estão no [registro de BT-001](validacao-bt-001.md).
+Após a publicação e integração da base, atualize sua `main`. Enquanto isso,
+somente o checkout local de integração contém a entrega; clonar a `main` remota
+não comprova que esse código esteja disponível. Siga o [guia local](desenvolvimento-local.md)
+para Docker e configuração privada de `.env.local`:
 
-Atualize sua cópia da branch principal. A entrega da base deve fornecer os itens abaixo; enquanto faltarem, a aplicação ainda não está pronta para desenvolvimento funcional.
+```sh
+npm ci
+npm run supabase:start
+cp .env.example .env.local
+# Preencha somente URL e Publishable/anon key locais, conforme o guia local.
+npm run check:connection
+npm run verify
+npm run prepare:test-data
+npm run prepare:test-data
+npm run dev
+```
 
-| Item entregue pela base | Ação de cada pessoa |
-| --- | --- |
-| Versão Node, `package.json` e lockfile | Usar a versão indicada e instalar com `npm ci` |
-| Exemplo de ambiente e instruções | Criar arquivo local ignorado pelo Git, escolhendo Supabase local ou cloud |
-| CLI Supabase com versão fixada e configuração versionada | Usar a CLI do projeto e os comandos documentados, sem reinicializar o projeto |
-| Migrations e rotina de dados de teste | Preparar somente seu banco local com os comandos entregues |
-| Comandos de desenvolvimento e verificação | Executar a aplicação, lint, TypeScript, build e testes |
-| Contratos e exemplos | Trabalhar com a mesma identidade, solicitação e histórico das outras frentes |
+Na primeira criação do banco local, o início aplica as migrations. Para comprovar reconstrução completa
+em sua stack **local descartável**, antes de `verify`, execute
+`npx --no-install supabase db reset --local --no-seed --yes`. O reset apaga
+os dados locais e precisa ser coordenado com qualquer processo usando a stack.
+Não use reset no cloud. Cada desenvolvedor usa seu próprio banco local.
 
-O arquivo de ambiente da aplicação será diferente das credenciais administrativas do agente e dos secrets do GitHub Actions. As chaves locais/cloud devem corresponder ao ambiente escolhido. Tokens pessoais, senha de banco e chaves administrativas ficam fora do Git e do código enviado ao navegador. Os nomes e comandos definitivos devem acompanhar os arquivos reais da implementação; este guia ainda não afirma que scripts `npm` da aplicação existem.
+`.env.local` contém `SUPABASE_TARGET=local`, `SUPABASE_URL=http://127.0.0.1:54321`
+e `SUPABASE_PUBLISHABLE_KEY`, sem `NEXT_PUBLIC_`; nunca chave administrativa.
+No cloud, configure o destino e chave pública conforme [BT-002](supabase-cloud.md).
+Conexão pública cloud disponível não significa que contratos/dados já existam.
+Credenciais administrativas e secrets de Actions são acessos separados.
 
-**Pronto quando:** aplicação abre localmente, Supabase local funciona, contas de teste autenticam, verificações passam e o teste com dois Clientes confirma isolamento dos dados. Conectar somente ao cloud não comprova que o ambiente local está funcionando.
+`verify` executa lint, TypeScript, build, cinco testes unitários e treze
+integrações reais atuais. Falta de stack/ambiente falha a suíte. Os globs incluem
+novos testes que sigam as convenções existentes. `prepare:test-data` autentica
+as quatro contas e prepara 21 solicitações e eventos por Cliente; a repetição
+preserva os dados. As credenciais fictícias locais e o roteiro de isolamento
+estão em [identidade](contratos-identidade.md) e [solicitações](contratos-solicitacoes.md).
+A rotina administrativa cloud fica separada do CD e depende da primeira
+promoção aprovada; siga [CI/CD](ci-cd.md), sem executar testes destrutivos lá.
+
+Abra <http://127.0.0.1:3000>: esta página inicial diagnostica conexão pelo
+servidor. As telas de login, envio e consulta continuam nas histórias da Sprint 1.
+Verifique os contratos com sessões reais pela suíte/rotina e pelo roteiro;
+não espere uma jornada de produto pronta. Encerre Next.js com Ctrl+C;
+`npm run supabase:stop` preserva os dados locais.
+
+**Pronto localmente quando:** aplicação abre, `verify` passa, a carga repetida
+não duplica registros e ambos os Clientes consultam somente os próprios dados.
+O aceite completo ainda exige as evidências remotas de [BT-006](ci-cd.md).
 
 ## 6. Começar a própria tarefa
 
-Escolha o cartão da sua frente, confirme escopo e responsáveis e crie uma branch por tarefa. O trabalho passa por PR, revisão de um colega e CI. Após integração e CI aprovado na `main`, o CD aplicará as migrations no cloud quando a automação estiver configurada. Preserve migrations integradas e use novas migrations para correções; desenvolvimento cotidiano acontece no banco local.
+Escolha o cartão da sua frente, confirme escopo e responsáveis e crie uma branch por tarefa. O trabalho passa por PR, revisão de um colega e CI. Após integração e CI aprovado na `main` do mesmo commit, o CD aplicará somente migrations pendentes no cloud, quando secrets e Actions estiverem ativos e verificados. Veja [CI/CD](ci-cd.md). Cada frente é responsável pelas migrations e contratos que evoluir; gere uma migration nova com `npx --no-install supabase migration new <nome>`, sem editar migrations integradas ou dos colegas. Combine alterações compartilhadas no PR, com revisão de um colega e CI aprovado. João mantém identidade/sessão; Paulo usa `criarSolicitacao`; Rebeca usa listagem, detalhe e histórico do [mesmo contrato](contratos-solicitacoes.md). Desenvolvimento cotidiano acontece no banco local.
 
 Para abrir uma sessão com contexto, cole no agente:
 
@@ -113,7 +152,7 @@ Para abrir uma sessão com contexto, cole no agente:
 - [ ] Tenho acesso pessoal ao GitHub, board do Trello e documentos do Drive.
 - [ ] Tenho as skills disponíveis e as conexões do agente foram testadas.
 - [ ] Git, Node/npm e runtime de containers funcionam no ambiente do agente.
-- [ ] Após a entrega da base: dependências, ambiente, migrations e dados locais preparados.
-- [ ] Após a entrega da base: aplicação e verificações passam com autenticação real.
+- [ ] Dependências, ambiente, migrations e dados locais preparados.
+- [ ] Aplicação e verificações passam com autenticação real.
 
-Quem prepara a base deve atualizar este guia com os comandos reais, nomes das variáveis de ambiente e evidência do primeiro CI/CD, antes de sinalizar que Rebeca e Paulo podem começar a implementação funcional. Configuração dos secrets e proteção do GitHub exigirá uma conta autorizada: a conta consultada na sessão de planejamento tinha somente leitura.
+A reprodução local e as conexões da sessão de João estão no [registro de validação](validacao-spec-001.md). Rebeca e Paulo ainda precisam autorizar/testar as próprias contas e executar seu checklist. A primeira execução CI/CD, secrets, proteção e dados cloud permanecem pendentes; até lá, não há prontidão completa declarada.
