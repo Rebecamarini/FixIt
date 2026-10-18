@@ -1,4 +1,5 @@
 import "server-only";
+import { getSupabaseConfig } from "./config.ts";
 
 export type ConnectionStatus = {
   status: "connected" | "configuration-error" | "unavailable";
@@ -9,57 +10,41 @@ export type ConnectionStatus = {
 export async function checkConnection(
   env: Record<string, string | undefined> = process.env,
 ): Promise<ConnectionStatus> {
-  if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
-    return {
-      status: "configuration-error",
-      message: "Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY em .env.local seguindo .env.example.",
-    };
+  let config;
+  try {
+    config = getSupabaseConfig(env);
+  } catch (error) {
+    return { status: "configuration-error", message: (error as Error).message };
   }
   try {
-    const url = new URL(env.SUPABASE_URL);
-    if (
-      url.protocol !== "http:" ||
-      !["127.0.0.1", "localhost"].includes(url.hostname) ||
-      url.port !== "54321" || url.pathname !== "/" ||
-      url.username || url.password || url.search || url.hash
-    ) throw new Error("Invalid local URL");
-
-    const key = env.SUPABASE_PUBLISHABLE_KEY;
-    if (!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) {
-      const parts = key.split(".");
-      if (parts.length !== 3 || JSON.parse(Buffer.from(parts[1], "base64url").toString()).role !== "anon") {
-        throw new Error("Invalid public key");
-      }
-    }
-  } catch {
-    return {
-      status: "configuration-error",
-      message: "Configuração inválida: use a URL local http://127.0.0.1:54321 e a chave Publishable ou anon da CLI Supabase. Nunca use chaves administrativas.",
-    };
-  }
-  try {
-    const responses = await Promise.all(["/auth/v1/health", "/rest/v1/", "/storage/v1/bucket"].map(async (path) => {
-      const response = await fetch(new URL(path, env.SUPABASE_URL), {
-        headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY!, Accept: "application/json" },
+    const responses = await Promise.all(["/auth/v1/health", "/rest/v1/__fixit_connection_probe__?select=*", "/storage/v1/bucket"].map(async (path) => {
+      const response = await fetch(new URL(path, config.url), {
+        headers: { apikey: config.publishableKey, Accept: "application/json" },
         cache: "no-store",
         redirect: "error",
         signal: AbortSignal.timeout(5000),
       });
-      if (!response.ok) throw new Error("Service unavailable");
-      return response.json();
+      const body = await response.json();
+      if (path.startsWith("/rest/v1/")) {
+        // A resource deliberately absent from the schema verifies PostgREST without exposing OpenAPI.
+        if (response.status !== 404 || body.code !== "PGRST205") throw new Error("API unavailable");
+      } else if (!response.ok) throw new Error("Service unavailable");
+      return body;
     }));
-    const [auth, api, buckets] = responses;
-    if (auth.name !== "GoTrue" || api.swagger !== "2.0" || !api.paths || !Array.isArray(buckets)) {
+    const [auth, , buckets] = responses;
+    if (auth.name !== "GoTrue" || !Array.isArray(buckets)) {
       throw new Error("Unexpected service response");
     }
     return {
       status: "connected",
-      message: "Conexão local verificada: Auth, API do PostgreSQL e Storage respondem pelo servidor.",
+      message: `Conexão ${config.target} verificada: Auth, PostgREST e Storage respondem pelo servidor.`,
     };
   } catch {
     return {
       status: "unavailable",
-      message: "Supabase local indisponível ou chave recusada. Verifique Docker, execute npm run supabase:start e confira a chave com npm run supabase:status.",
+      message: config.target === "local"
+        ? "Supabase local indisponível ou chave recusada. Verifique Docker, execute npm run supabase:start e confira a chave com npm run supabase:status."
+        : "Supabase cloud indisponível ou chave recusada. Confira o estado do projeto e a Publishable key do mesmo ambiente no painel Supabase.",
     };
   }
 }

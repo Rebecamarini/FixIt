@@ -1,6 +1,6 @@
 # Executar o FixIt localmente — BT-001
 
-Entrega de [BT-001](https://trello.com/c/n4BRJlnF), parte da [SPEC-001](https://trello.com/c/vWo76DXs). Execute os comandos na raiz do repositório. Este caminho prepara a aplicação inicial; autenticação de usuários, regras de negócio e cloud pertencem aos próximos cartões.
+Entrega de [BT-001](https://trello.com/c/n4BRJlnF), parte da [SPEC-001](https://trello.com/c/vWo76DXs). Execute os comandos na raiz do repositório. Este caminho prepara a aplicação inicial; consulte também o [guia do cloud compartilhado](supabase-cloud.md) para BT-002.
 
 ## Ferramentas
 
@@ -46,6 +46,7 @@ npm run supabase:status
 Edite `.env.local` com a URL local e a **Publishable key** exibidas pela CLI. Se a saída usar **anon key**, use essa chave no mesmo campo:
 
 ```dotenv
+SUPABASE_TARGET=local
 SUPABASE_URL=http://127.0.0.1:54321
 SUPABASE_PUBLISHABLE_KEY=preencha-com-a-chave-local
 ```
@@ -59,7 +60,7 @@ npm run dev
 
 Abra <http://127.0.0.1:3000>. A página consulta Auth, a API REST do PostgreSQL e Storage pelo servidor, sem cache, e mostra somente um diagnóstico fixo. Use “Verificar novamente” para refazer a consulta. Reinicie o Next.js após alterar o ambiente. O comando `check:connection` reutiliza a mesma verificação e retorna código 1 se configuração/conexão falharem.
 
-O diagnóstico acessa `/auth/v1/health`, o documento OpenAPI de `/rest/v1/` e a listagem autorizada de buckets em `/storage/v1/bucket`, com chave pública, limite de cinco segundos por requisição e sem seguir redirecionamentos. A resposta de Storage é descartada após validar o formato; nomes de buckets não são exibidos. Essa consulta rejeita chave inválida, enquanto health/OpenAPI locais também respondem sem chave. Nenhuma tabela de aplicação é consultada. Isso comprova a disponibilidade inicial dos serviços, não autenticação de usuários nem isolamento de dados, entregues em BT-003 e seguintes. Nesta entrega são aceitas apenas URLs locais em `localhost` ou `127.0.0.1`, porta 54321; a seleção cloud pertence a BT-002.
+O diagnóstico acessa Auth health, PostgREST por um recurso reservado inexistente (resposta exata HTTP 404/`PGRST205`) e Storage com a chave pública. Não exibe dados de buckets. Essa verificação comprova disponibilidade e aceitação da chave, sem consultar tabelas de aplicação; sessão e isolamento são verificados separadamente. A configuração exige seleção explícita `SUPABASE_TARGET=local` ou `cloud`, com URL do mesmo destino. Consulte o [guia cloud](supabase-cloud.md) para alternar com segurança.
 
 ## Verificações
 
@@ -91,7 +92,7 @@ A parada e o reinício foram verificados com um registro descartável em esquema
 | Versão de Node/npm incompatível | Use `.nvmrc` e confira as versões antes de `npm ci`. |
 | Docker ausente ou sem servidor | Instale/inicie o runtime e habilite a integração WSL; confira `docker version`. |
 | Porta ocupada ao iniciar Supabase | Encerre a outra stack local que ocupa as portas 54321–54327; não altere só a URL da aplicação. |
-| Configuração ausente | Copie `.env.example` para `.env.local` e preencha os dois campos. |
+| Configuração ausente | Copie `.env.example` para `.env.local` e preencha os três campos. |
 | Configuração inválida | Use a URL raiz local e chave Publishable/anon; chaves administrativas e URLs com credenciais, caminhos ou parâmetros são recusadas. |
 | Supabase indisponível ou chave recusada | Confira `supabase:start`, `supabase:status` e a chave do mesmo ambiente. |
 
