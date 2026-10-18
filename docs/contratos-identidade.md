@@ -34,7 +34,10 @@ Cadastro usa `client.auth.signUp` com este payload:
 
 Sem confirmação de e-mail no ambiente configurado; cadastro retorna sessão.
 Isso não comprova posse do endereço. E-mail e senha não são copiados ao perfil.
-Campos nulos, ausentes, nome/matrícula vazios e setor inexistente são recusados.
+Nome e matrícula devem ser strings JSON; números, booleanos, arrays e objetos
+são recusados, sem coerção. O trim segue `String.prototype.trim()` do JavaScript,
+incluindo NBSP (U+00A0) e BOM (U+FEFF); valores compostos só desses espaços
+são vazios e recusados. Campos nulos, ausentes e setor inexistente são recusados.
 Não há formato institucional imposto à matrícula; zeros iniciais são preservados.
 
 `perfis`: `id uuid PK/FK auth.users`, `nome text`, `matricula text`,
@@ -108,8 +111,17 @@ iniciais com sessões reais; veja o [contrato de consulta](contratos-solicitacoe
 ## Verificação
 
 `npm run test:integration` usa Auth/API/PostgreSQL reais e cookie jar SSR:
-cadastro, normalização/duplicatas, validações, sessão reconstruída, isolamento,
+cadastro, normalização/duplicatas (incluindo os 25 caracteres do trim JavaScript),
+BOM isolado, os quatro tipos JSON não textuais nos dois campos, validações,
+sessão reconstruída, isolamento,
 logout, senha inválida e ataques de papel. A preparação é repetível e autentica
 as quatro contas sem alterar senhas no rerun. As integrações exigem alvo
 explicitamente local e acessam a chave administrativa local somente no helper
 de testes para limpar suas próprias identidades temporárias.
+
+As migrations de revisão `20261018152845_identity_javascript_trim` e
+`20261018152923_identity_metadata_text` corrigem a fronteira de cadastro sem
+reescrever identidades existentes. A primeira valida constraints sobre os perfis
+atuais: se houver nome/matrícula não normalizados, a promoção falha e exige
+reconciliação administrativa explícita antes de repetir, evitando colisões ou
+mudança silenciosa de matrícula. As duas migrations originais ficam preservadas.
