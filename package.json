@@ -16,6 +16,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --conditions=react-server --test --test-isolation=none tests/*.test.ts",
     "test:integration": "node --conditions=react-server --test --test-isolation=none tests/*.integration.ts",
+    "verify": "npm run lint && npm run typecheck && npm run build && npm test && npm run test:integration",
     "check:connection": "node --conditions=react-server scripts/check-connection.ts",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
