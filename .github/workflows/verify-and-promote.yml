@@ -1,0 +1,87 @@
+name: Verify and promote
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install pinned npm and locked dependencies
+        run: |
+          npm install --global npm@11.16.0
+          npm ci
+      - name: Start complete disposable Supabase stack
+        run: |
+          # CLI startup output includes local keys; keep it out of Actions logs.
+          npx --no-install supabase start > "$RUNNER_TEMP/supabase-start.log" 2>&1 || {
+            echo "Supabase startup failed; reproduce locally with npm run supabase:start."
+            exit 1
+          }
+          npx --no-install supabase db reset --local --no-seed --yes
+      - name: Configure local public connection without logging keys
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { writeFileSync } from 'node:fs';
+          const status = JSON.parse(execFileSync('npx', ['--no-install', 'supabase', 'status', '--output', 'json'], {
+            encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+          }));
+          const key = status.PUBLISHABLE_KEY ?? status.ANON_KEY;
+          if (status.API_URL !== 'http://127.0.0.1:54321' || !key) throw new Error('Invalid local Supabase configuration.');
+          writeFileSync('.env.local', `SUPABASE_TARGET=local\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${key}\n`, { mode: 0o600 });
+          NODE
+      - name: Verify lint, types, build, unit and all integration tests
+        run: npm run verify
+      - name: Remove disposable stack
+        if: always()
+        run: npx --no-install supabase stop --no-backup
+
+  deploy:
+    name: Promote pending migrations
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    concurrency:
+      group: supabase-gifqssocvuieagmndxwy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install pinned npm and locked dependencies
+        run: |
+          npm install --global npm@11.16.0
+          npm ci
+      - name: Apply only pending migrations to the shared project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          : "${SUPABASE_ACCESS_TOKEN:?Missing SUPABASE_ACCESS_TOKEN secret}"
+          : "${SUPABASE_PROJECT_ID:?Missing SUPABASE_PROJECT_ID secret}"
+          : "${SUPABASE_DB_PASSWORD:?Missing SUPABASE_DB_PASSWORD secret}"
+          test "$SUPABASE_PROJECT_ID" = gifqssocvuieagmndxwy
+          npx --no-install supabase db push --project-ref "$SUPABASE_PROJECT_ID" --skip-vault --yes

@@ -64,6 +64,10 @@ O diagnóstico acessa Auth health, PostgREST por um recurso reservado inexistent
 
 ## Verificações
 
+`npm run verify` executa lint, tipos, build, testes unitários e todas as
+integrações. Exige a stack real e `.env.local` configurados. O [guia de CI/CD](ci-cd.md)
+explica a reconstrução desde banco vazio e as pendências de ativação remota.
+
 ```sh
 npm run lint
 npm run typecheck
