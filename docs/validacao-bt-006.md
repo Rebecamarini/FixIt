@@ -22,10 +22,24 @@ seed ou `--include-all`. A stack inicia completa e o reset está explicitamente
 limitado a `--local` no runner descartável. Os globs existentes incluem todos
 os arquivos de integração futuros que sigam a convenção.
 
-Essa revisão não é evidência de execução remota ou concorrência real. A
-reprodução da suíte final desde banco vazio depende da integração de
-BT-004/BT-005 e da coordenação da stack local compartilhada durante o trabalho.
-BT-006 não reiniciou/resetou a stack usada pelos outros cartões.
+Essa revisão não é evidência de execução remota ou concorrência real.
+
+## Reprodução final local — 2026-10-18
+
+Após integração de BT-004/BT-005, um clone Git limpo de
+`integration/spec-001@ed3584d4a5b2dfbe76560268aea797086328b64c` executou
+`npm ci`, `supabase db reset --local --no-seed --yes`, configuração pública
+privada obtida da CLI e `npm run verify`: lint, tipos, build, cinco unitários e
+treze integrações reais aprovados, sem skips. As duas migrations foram aplicadas
+desde banco vazio na stack completa. A execução foi coordenada após os demais
+trabalhos liberarem a stack; imagens/containers já existiam no host.
+
+A preparação administrativa foi executada explicitamente duas vezes; quatro
+contas autenticadas, 42 solicitações/eventos preservados e isolamento das duas
+sessões Cliente confirmados. A página inicial respondeu HTTP 200 com conexão
+ativa. Veja a [evidência completa e seus limites](validacao-spec-001.md).
+A reprodução corresponde aos comandos do CI, mas não é uma execução GitHub
+Actions e não comprova promoção remota, concorrência ou proteção ativa.
 
 O [guia operacional](ci-cd.md) registra configuração, rotina separada de dados,
 diagnóstico, acesso GitHub pendente e todas as evidências necessárias para o

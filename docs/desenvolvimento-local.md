@@ -100,7 +100,7 @@ A parada e o reinício foram verificados com um registro descartável em esquema
 | Configuração inválida | Use a URL raiz local e chave Publishable/anon; chaves administrativas e URLs com credenciais, caminhos ou parâmetros são recusadas. |
 | Supabase indisponível ou chave recusada | Confira `supabase:start`, `supabase:status` e a chave do mesmo ambiente. |
 
-Migrations, contas reais de teste e contratos de sessão serão acrescentados nos cartões dependentes. Este cartão não exige criar usuários fictícios nem abrir acesso a dados protegidos.
+Migrations, contas reais e contratos de sessão/solicitações foram acrescentados por BT-003 a BT-005. Consulte [identidade](contratos-identidade.md), [solicitações](contratos-solicitacoes.md) e a [reprodução em clone limpo](validacao-spec-001.md).
 
 ## Identidade real e contas fictícias (BT-003)
 
