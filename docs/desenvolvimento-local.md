@@ -97,3 +97,11 @@ A parada e o reinício foram verificados com um registro descartável em esquema
 | Supabase indisponível ou chave recusada | Confira `supabase:start`, `supabase:status` e a chave do mesmo ambiente. |
 
 Migrations, contas reais de teste e contratos de sessão serão acrescentados nos cartões dependentes. Este cartão não exige criar usuários fictícios nem abrir acesso a dados protegidos.
+
+## Identidade real e contas fictícias (BT-003)
+
+Depois das migrations locais, execute `npm run prepare:test-data` para preparar
+as quatro contas reais. Consulte [o contrato de identidade](contratos-identidade.md)
+para credenciais locais fictícias, integração SSR, regras de cadastro, acesso
+protegido e preparação administrativa separada no cloud. O script pode ser
+repetido sem redefinir senhas; colisões preservam contas existentes.
