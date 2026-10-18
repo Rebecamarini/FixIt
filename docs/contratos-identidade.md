@@ -102,6 +102,9 @@ administrativa com chave privilegiada; futuras alterações de papéis exigem
 procedimento administrativo revisado, nunca `user_metadata` nem cliente público.
 Não há tela de gestão entregue aqui.
 
+A rotina também prepara 21 solicitações próprias por Cliente e verifica os eventos
+iniciais com sessões reais; veja o [contrato de consulta](contratos-solicitacoes.md#consulta-própria--bt-005).
+
 ## Verificação
 
 `npm run test:integration` usa Auth/API/PostgreSQL reais e cookie jar SSR:
