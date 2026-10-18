@@ -88,3 +88,93 @@ que recusa apenas o autor de teste no histórico, observa ausência do registro
 pai pela API e remove a constraint em `finally`. A proteção de alvo local roda
 antes desse SQL; não existe failpoint em código/migration de produção.
 Dados reproduzíveis para consulta e paginação pertencem à BT-005.
+
+## Consulta própria — BT-005
+
+[BT-005](https://trello.com/c/m7H2NRnJ) prepara os contratos para Rebeca em
+[S1-R01](https://trello.com/c/OaAB6z5B), sem entregar as telas de US-005/010/011.
+As funções abaixo são exportadas pelo mesmo `src/server/requests.ts`, recebem
+`createSessionClient()` no servidor e usam a identidade real da requisição.
+Nenhuma consulta usa chave administrativa. Gestor/Manutentor não recebem
+visibilidade administrativa nesta base.
+
+`listarSolicitacoes(client, pagina = 1)` recebe página numérica inteira, começando
+em **1**, com **20** itens fixos. Strings, null, frações, zero e negativos são
+inválidos; limite de página `107374182` mantém o intervalo dentro do inteiro da
+API. Ordenação: `criado_em DESC, id DESC` (UUID desempata instantes iguais).
+Cada `ResumoSolicitacao` contém apenas `id`, `assunto`, `categoria_id`,
+`criado_em` e `estado`, com os mesmos tipos não nulos da solicitação. A categoria
+pode ser resolvida nas referências compartilhadas, sem copiar o nome para a
+solicitação. `total` conta somente o conjunto autorizado; não inclui outro Cliente.
+
+```ts
+const client = await createSessionClient();
+await listarSolicitacoes(client, 1);
+// { data: { itens: [{ id: UUID, assunto: "Lâmpada apagada",
+//   categoria_id: UUID, criado_em: ISO, estado: "Pendente" }, ...],
+//   pagina: 1, tamanho_pagina: 20, total: 21 }, erro: null }
+await listarSolicitacoes(client, 2);
+// { data: { itens: [/* último resumo */], pagina: 2,
+//   tamanho_pagina: 20, total: 21 }, erro: null }
+await listarSolicitacoes(client, 3);
+// { data: { itens: [], pagina: 3, tamanho_pagina: 20, total: 21 }, erro: null }
+// Cliente sem solicitações: itens: [], pagina: 1, tamanho_pagina: 20, total: 0.
+```
+
+Paginação por deslocamento: envios concorrentes podem deslocar itens entre
+consultas de páginas; a ordenação determinística vale para o conjunto estável,
+sem prometer snapshot entre requisições. Página além do total também é sucesso
+vazio; a operação trata o intervalo fora do conjunto retornado pela API.
+
+`obterSolicitacao(client, id)` retorna `{ data: Solicitacao, erro: null }`, com
+todos os campos documentados acima, incluindo textos opcionais null. UUID válido
+inexistente e UUID de outro Cliente retornam exatamente
+`{ data: null, erro: "nao_encontrado" }`, sem confirmar existência.
+
+`obterHistoricoSolicitacao(client, id)` verifica a mesma solicitação protegida e
+retorna `{ data: EventoSolicitacao[], erro: null }`, ordenado por
+`criado_em ASC, id ASC`. Cada evento possui os campos/tipos da tabela de histórico
+documentados acima. A criação produz um evento; estado anterior é null.
+Histórico de UUID inexistente/alheio recebe a mesma resposta `nao_encontrado` do
+detalhe, em vez de confundir ausência com um histórico permitido vazio. Não há
+função de escrita; API também recusa INSERT/UPDATE/DELETE do Cliente.
+
+Todas as consultas retornam `{ data: null, erro }` em falha. Códigos:
+`nao_autenticado` (sem sessão/perfil), `nao_autorizado` (papel diferente de Cliente),
+`dados_invalidos` (página ou UUID inválido), `nao_encontrado` (detalhe/histórico
+fora do conjunto próprio), `falha_consulta` (demais erros da API). Falha de
+verificação de perfil continua lançando o erro sanitizado de identidade.
+Sem sessão, a API direta não concede SELECT; outra sessão Cliente recebe
+lista vazia para o UUID alheio. O contrato normaliza essa ausência no servidor.
+
+### Exemplos reproduzíveis e roteiro local
+
+Execute `npm run prepare:test-data` após as migrations locais. Além das quatro
+contas do [contrato de identidade](contratos-identidade.md), a rotina prepara
+**21 solicitações e 21 eventos por Cliente**. Usa `criarSolicitacao` com sessão
+real de cada conta; autoria, data, UUID e estado continuam vindo do banco.
+Assuntos estáveis: `SPEC-001 exemplo 0001-01` a `0001-21`, e `0002-01` a
+`0002-21`. Categoria Elétrica, locais `Sala fictícia 1` a `Sala fictícia 21`.
+Datas e UUIDs são gerados na primeira execução, preservados nas seguintes.
+
+Repita o comando para verificar idempotência: contas/senhas, solicitações e eventos
+existentes não são alterados. Um assunto reservado duplicado, conteúdo divergente
+ou histórico alterado interrompe a carga com diagnóstico de colisão, preservando
+os registros. Solicitações adicionais dos usuários ficam intactas. Execute uma
+rotina por vez; esta carga manual não coordena execuções concorrentes.
+
+Entre com cada Cliente pelas credenciais fictícias locais documentadas, chame
+listagem (páginas 1, 2 e 3), abra um UUID próprio e tente um da outra conta.
+Execute `npm run test:integration` para verificar também vazio, empate de datas,
+cronologia, ausência uniforme e ataques de escrita. Os dados cronológicos extras
+dos testes são sintéticos, locais e limpos; não implementam transições de estado.
+O cloud usa os mesmos guards explícitos de alvo/senha/chave administrativa e
+confirmação do contrato de identidade, somente após promoção aprovada das
+migrations. A preparação permanece separada do CD; BT-005 não executa carga cloud.
+
+Verificado localmente em 2026-10-18: `sg docker -c 'npm run verify'` aprovou
+lint, tipos, build, 5 verificações de configuração e 13 integrações reais. As
+3 integrações de consulta cobrem paginação/empates, privacidade/cronologia e
+repetição da carga comparando contas, solicitações e eventos antes/depois,
+incluindo uma solicitação adicional preservada. O banco local permanece com
+os 42 exemplos e seus eventos; testes removem apenas seus registros temporários.

@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
+import { criarSolicitacao } from "../src/server/requests.ts";
 import { getSupabaseConfig } from "../src/server/config.ts";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -58,6 +59,36 @@ for (const fixture of fixtures) {
   const client = createClient(config.url, config.publishableKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const signed = await client.auth.signInWithPassword({ email: fixture.email, password });
   if (signed.error || signed.data.user.id !== id) throw new Error(`Conta ${fixture.email} preservada, mas a senha fornecida não autentica.`);
+  if (fixture.papel === "Cliente") {
+    for (let number = 1; number <= 21; number++) {
+      const input = {
+        local: `Sala fictícia ${number}`,
+        categoria_id: "20000000-0000-4000-8000-000000000001",
+        assunto: `SPEC-001 exemplo ${fixture.matricula}-${String(number).padStart(2, "0")}`,
+        descricao: "Lâmpada fictícia apagada. Exemplo para consulta e isolamento.",
+      };
+      const existingRows = await client.from("solicitacoes").select("*").eq("assunto", input.assunto);
+      if (existingRows.error) throw new Error("Falha ao verificar exemplos de solicitação.");
+      if (existingRows.data.length > 1) throw new Error(`Colisão no exemplo ${input.assunto}: registros preservados.`);
+      let row = existingRows.data[0];
+      if (!row) {
+        const created = await criarSolicitacao(client, input);
+        if (!created.data) throw new Error(`Falha ao criar exemplo ${input.assunto}.`);
+        row = created.data;
+      }
+      if (row.autor_id !== id || row.estado !== "Pendente" || Object.entries(input).some(([key, value]) => row[key] !== value) ||
+        ["motivo", "pessoas_areas_afetadas", "frequencia", "tipo_utilizacao", "riscos", "patrimonios_afetados"].some(key => row[key] !== null)) {
+        throw new Error(`Colisão no exemplo ${input.assunto}: registro preservado.`);
+      }
+      const history = await client.from("historico_solicitacoes").select("*").eq("solicitacao_id", row.id);
+      const event = history.data?.[0];
+      if (history.error || history.data?.length !== 1 || event.autor_id !== id || event.criado_em !== row.criado_em ||
+        event.descricao !== "Solicitação criada." || event.estado_anterior !== null || event.estado_novo !== "Pendente") {
+        throw new Error(`Histórico divergente no exemplo ${input.assunto}: dados preservados.`);
+      }
+    }
+    console.log(`21 solicitações fictícias e eventos verificados para ${fixture.email}.`);
+  }
   await client.auth.signOut();
   console.log(`Conta fictícia verificada: ${fixture.email} (${fixture.papel}).`);
 }
