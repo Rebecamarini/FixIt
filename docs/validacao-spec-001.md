@@ -4,10 +4,11 @@
 [BT-007](https://trello.com/c/iZhZxnWc).
 
 **Base local reproduzida; prontidão completa pendente.** BT-001 a BT-005 foram
-integrados na branch local `integration/spec-001`. A conta GitHub consultada
-não permite publicar/integrar nem configurar secrets; BT-006 e o critério
-remoto de BT-007 permanecem incompletos. Não há execução remota de CI/CD,
-migrations de domínio ou carga de dados cloud comprovadas.
+integrados em `integration/spec-001`, publicada em 2026-10-20 no
+[PR #1](https://github.com/Rebecamarini/FixIt/pull/1). BT-006 e o critério
+remoto de BT-007 permanecem incompletos. O registro de 2026-10-18 abaixo é
+histórico; a ativação remota de 2026-10-20 está em [BT-006](ci-cd.md).
+Ainda não há migrations de domínio ou carga de dados cloud comprovadas.
 
 ## Reprodução local desde checkout limpo
 
@@ -83,6 +84,20 @@ autenticaram as quatro contas e preservaram quatro perfis, 42 solicitações e
 aos IDs anteriores). Os 12 containers completos continuam em execução. Nenhuma
 migration, preparação ou operação destrutiva foi feita no cloud; sem push remoto.
 
+## CI remoto — 2026-10-20
+
+A branch de integração foi publicada no
+[PR #1](https://github.com/Rebecamarini/FixIt/pull/1). O SHA
+`e5231441b5eb96ebbfd1b82a83b6d2fc54dae221` passou no
+[GitHub Actions](https://github.com/Rebecamarini/FixIt/actions/runs/39497092904):
+stack completa, reset local do runner sem seed, quatro migrations, lint,
+tipos, build, cinco unitários e 26 integrações (15 testes principais e 11
+subtestes), sem falhas/skips; cleanup aprovado. A promoção foi ignorada por
+ser evento de PR. Essa evidência não substitui CI/CD do SHA integrado em
+`main`, revisão de colega nem validação dos dados cloud. O [ensaio controlado em PR separado](https://github.com/Rebecamarini/FixIt/actions/runs/39497682151)
+falhou realmente no lint, com cleanup aprovado e promoção ignorada. O PR de
+ensaio foi fechado sem merge e sua branch removida. As condições atuais de
+secrets/proteção e os limites dessa prova estão em [BT-006](ci-cd.md).
 
 ## Ferramentas do agente e conexões
 
@@ -104,9 +119,9 @@ recursos externos durante essas verificações.
 
 ## Pendências que impedem o aceite completo
 
-- Publicar/revisar/integrar pela `main` do repositório correto com acesso autorizado.
+- Revisar/integrar o PR publicado pela `main` do repositório correto com acesso autorizado.
 - Configurar secrets e conferir proteção/revisão/checks realmente ativos ou sua limitação.
-- Executar CI remoto com todos os testes finais e promover migrations do mesmo SHA;
+- Executar CI do SHA final integrado em `main` e promover migrations do mesmo SHA;
   comprovar reaplicação, preservação, bloqueio por falha e ausência de sobreposição.
 - Preparar/validar quatro sessões reais e dados fictícios cloud após promoção aprovada,
   com carga repetida sem duplicação e isolamento; seguir [BT-006](ci-cd.md).

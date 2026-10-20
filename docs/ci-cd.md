@@ -2,12 +2,13 @@
 
 [BT-006](https://trello.com/c/3W4Ajz0j) · [SPEC-001](https://trello.com/c/vWo76DXs).
 
-**Preparado localmente; ativação e aceite remoto pendentes.** Em 2026-10-18,
-a conta GitHub `Jrmelo317` tem somente leitura em `Rebecamarini/FixIt`, sem
-push/administração/secrets. O projeto Supabase já existe e a CLI está
-autenticada, mas isso não fornece acesso ao GitHub Actions. Nenhum deploy de
-migrations de domínio ou preparação de dados cloud foi executado por BT-006.
-O cartão permanece incompleto até as evidências abaixo.
+**Publicado para revisão; aceite remoto pendente.** Em 2026-10-20, a conta
+GitHub `Jrmelo317` possui push, mas não administração, em `Rebecamarini/FixIt`.
+A implementação está no [PR #1](https://github.com/Rebecamarini/FixIt/pull/1),
+branch `integration/spec-001`, SHA
+`e5231441b5eb96ebbfd1b82a83b6d2fc54dae221`. A publicação não representa
+integração em `main` nem deploy cloud. BT-006 permanece incompleto até as
+evidências abaixo.
 
 ## Verificação e promoção
 
@@ -156,10 +157,57 @@ revisão administrativa; não apague registros para forçar sucesso.
   Auth comum sem confirmação; proteção/checks efetivamente ativos ou limitação
   registrada.
 
-Enquanto o acesso GitHub estiver somente leitura, ficam pendentes: publicação,
-secrets, proteção, execuções remotas, promoção, preparação/validação de dados
-cloud e evidências de falha/concorrência/preservação. Arquivos escritos e
-verificação local não encerram o cartão.
+## Ativação remota — 2026-10-20
+
+O [PR #1](https://github.com/Rebecamarini/FixIt/pull/1), no SHA
+`e5231441b5eb96ebbfd1b82a83b6d2fc54dae221`, concluiu o
+[workflow remoto](https://github.com/Rebecamarini/FixIt/actions/runs/39497092904)
+com sucesso. O job **CI** iniciou a stack completa no runner, reconstruiu o
+banco sem seed e aplicou as quatro migrations. Lint, tipos e build passaram;
+foram aprovados cinco testes unitários e 26 integrações reais (15 testes
+principais e 11 subtestes), zero falhas/skips. O cleanup também passou.
+**Promote pending migrations** ficou `skipped`, pois o evento era PR.
+Essa execução verifica esse SHA, não commits posteriores nem promoção cloud.
+
+### Falha controlada de CI, fora de `main`
+
+Após o baseline aprovado, o [PR #2](https://github.com/Rebecamarini/FixIt/pull/2)
+foi aberto contra `integration/spec-001`, no SHA
+`c1e1ee9d90aa0915f573616c0d90af43ec87c3a2`. A única mudança era um arquivo
+temporário de duas linhas com variável deliberadamente não usada; nenhum
+workflow foi alterado. A [execução real](https://github.com/Rebecamarini/FixIt/actions/runs/39497682151)
+terminou com **CI: failure**, entre 21:06:46 e 21:09:54 UTC. A stack completa,
+reset e conexão local passaram. O passo **Verify lint, types, build, unit and
+all integration tests** parou no lint: `@typescript-eslint/no-unused-vars`,
+linha 2:7 de `scripts/bt006-ci-failure-proof.ts`, uma warning acima do limite
+zero; processo retornou 1. Os comandos seguintes de `verify` não rodaram.
+Cleanup aprovado; **Promote pending migrations: skipped**.
+
+O PR foi fechado sem merge e a branch remota `validation/bt-006-ci-failure`
+foi removida após capturar a evidência. A falha deliberada não entrou em
+`integration/spec-001` nem em `main`. O skip de promoção em PR também decorre
+da condição de evento; esta prova demonstra falha real do CI, enquanto o gate
+`needs: ci` permanece verificado na configuração do workflow.
+
+### Limitações de ativação
+
+Na consulta inicial desta sessão, a lista de repository secrets estava vazia.
+`SUPABASE_PROJECT_ID` foi configurado separadamente pelo responsável pela
+ativação; token e senha do banco continuam pendentes de configuração privada.
+Autenticação pessoal na CLI não substitui esses secrets.
+
+`main` retornou `protected: false` e a lista de rulesets retornou vazia. A conta
+atual não possui administração; o endpoint de permissões de Actions retornou
+HTTP 403, embora as execuções sejam acessíveis. Portanto não há proteção de
+branch comprovada. Revisão por colega e CI aprovado continuam sendo condições
+explícitas antes da integração; nenhum merge em `main` foi feito por esta
+validação.
+
+Continuam pendentes promoção em `main` do mesmo SHA aprovado, secrets restantes,
+revisão de colega, reaplicação, concorrência real, preservação e preparação/
+validação de dados cloud. O ensaio de falha em PR não comprova execução do gate
+no evento push: a promoção também fica ignorada em PR pela condição de evento.
+A dependência `needs: ci` é a garantia estática registrada separadamente.
 
 Referências: [deploys Supabase](https://supabase.com/docs/guides/deployment/managing-environments),
 [dependências de jobs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs),
