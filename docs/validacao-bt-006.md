@@ -1,7 +1,17 @@
-# Validação parcial — BT-006
+# Validação — BT-006
 
 2026-10-18 · [BT-006](https://trello.com/c/3W4Ajz0j),
 [SPEC-001](https://trello.com/c/vWo76DXs).
+
+**Atualização de 2026-10-20:** o PR #1 foi integrado à `main`, com duas
+promoções elegíveis aprovadas e dados cloud preparados/repetidos sem duplicação.
+O [registro remoto detalhado](ci-cd.md#promoções-e-dados-compartilhados--2026-10-20)
+contém SHAs, jobs, horários, hash de preservação e limites de concorrência,
+proteção, revisão e advisors. A correção dos grants herdados de identidade também foi integrada no PR #3
+e promovida no SHA `561d89425e1beec1fba8a009893e9aef8757df4c`: cinco
+migrations remotas, API anônima de perfis e escrita de papel recusadas com
+`42501`, mesmos dados e hash preservados após nova preparação.
+Os resultados de 2026-10-18 abaixo são históricos.
 
 Base de implementação: `integration/spec-001@fcd5924` (BT-001/002/003).
 
@@ -43,5 +53,5 @@ Actions e não comprova promoção remota, concorrência ou proteção ativa.
 
 O [guia operacional](ci-cd.md) registra configuração, rotina separada de dados,
 diagnóstico, acesso GitHub pendente e todas as evidências necessárias para o
-aceite. Secrets/proteção não foram configurados; nenhuma migration ou carga
-de dados foi aplicada no cloud. O cartão permanece incompleto.
+aceite. Naquela data, secrets/proteção não tinham sido configurados e nenhuma
+migration ou carga de dados tinha sido aplicada no cloud. Naquela rodada, o cartão permanecia incompleto.

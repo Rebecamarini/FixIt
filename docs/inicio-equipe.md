@@ -1,6 +1,6 @@
 # Começar a desenvolver no FixIt
 
-Guia para Rebeca e Paulo, atualizado em 2026-10-18. Cada pessoa configura as ferramentas e autoriza as conexões na própria conta. Clonar o repositório traz a documentação, mas não instala skills nem conecta serviços ao agente.
+Guia para Rebeca e Paulo, atualizado em 2026-10-20. Cada pessoa configura as ferramentas e autoriza as conexões na própria conta. Clonar o repositório traz a documentação, mas não instala skills nem conecta serviços ao agente.
 
 ## 1. Entender o que já foi definido
 
@@ -12,15 +12,17 @@ Leia o [README](../README.md), as [decisões da base técnica](base-tecnica.md) 
 | Criação e envio | Paulo | [S1-P01](https://trello.com/c/NO7qMjHP): solicitação e evento inicial |
 | Consulta e autorização | Rebeca | [S1-R01](https://trello.com/c/OaAB6z5B): leitura, isolamento e dados de teste |
 
-**Estado atual:** BT-001 a BT-005 estão implementados na integração local da
-SPEC-001: aplicação, stack local, identidade, criação, consulta e dados fictícios.
-O cloud `fixit-dev` existe em São Paulo (`gifqssocvuieagmndxwy`), mas ainda não
-recebeu as migrations de domínio nem os dados. BT-006 tem workflow preparado;
-a conta GitHub `Jrmelo317` consultada continua sem push/administração/secrets.
-A base ainda não foi integrada à `main` remota nem teve CI/CD remoto comprovado.
-BT-007 e a prontidão completa permanecem parciais até resolver esse bloqueio.
-O [registro de validação](validacao-spec-001.md) distingue execução local,
-conexões verificadas e autorizações pessoais ainda não conferidas.
+**Estado atual:** a base técnica está integrada à `main` pelos
+[PRs #1](https://github.com/Rebecamarini/FixIt/pull/1) e
+[#3](https://github.com/Rebecamarini/FixIt/pull/3), com cinco migrations,
+CI/CD e reaplicação aprovados. O cloud `fixit-dev` em São Paulo (`gifqssocvuieagmndxwy`) tem quatro
+contas reais, 42 solicitações/eventos de exemplo e um registro independente
+preservado: total 43. Os dois Clientes continuam isolados. A correção incremental de grants também
+foi promovida e verificada pela API e pelos privilégios reais.
+O [registro de validação](validacao-spec-001.md) distingue as evidências
+compartilhadas das configurações e autorizações pessoais que cada colega
+precisa conferir. `main` não tem proteção ativa comprovada; PR, revisão de
+colega e CI continuam sendo convenção da equipe.
 
 ## 2. Preparar a máquina e o GitHub
 
@@ -116,7 +118,8 @@ Não use reset no cloud. Cada desenvolvedor usa seu próprio banco local.
 `.env.local` contém `SUPABASE_TARGET=local`, `SUPABASE_URL=http://127.0.0.1:54321`
 e `SUPABASE_PUBLISHABLE_KEY`, sem `NEXT_PUBLIC_`; nunca chave administrativa.
 No cloud, configure o destino e chave pública conforme [BT-002](supabase-cloud.md).
-Conexão pública cloud disponível não significa que contratos/dados já existam.
+Os contratos e dados cloud compartilhados têm evidência em [CI/CD](ci-cd.md);
+conferir apenas a conexão pública não substitui testes com a própria sessão.
 Credenciais administrativas e secrets de Actions são acessos separados.
 
 `verify` executa lint, TypeScript, build, cinco testes unitários e treze
@@ -136,7 +139,7 @@ não espere uma jornada de produto pronta. Encerre Next.js com Ctrl+C;
 
 **Pronto localmente quando:** aplicação abre, `verify` passa, a carga repetida
 não duplica registros e ambos os Clientes consultam somente os próprios dados.
-O aceite completo ainda exige as evidências remotas de [BT-006](ci-cd.md).
+As evidências remotas compartilhadas e seus limites estão em [BT-006](ci-cd.md).
 
 ## 6. Começar a própria tarefa
 
@@ -155,4 +158,4 @@ Para abrir uma sessão com contexto, cole no agente:
 - [ ] Dependências, ambiente, migrations e dados locais preparados.
 - [ ] Aplicação e verificações passam com autenticação real.
 
-A reprodução local e as conexões da sessão de João estão no [registro de validação](validacao-spec-001.md). Rebeca e Paulo ainda precisam autorizar/testar as próprias contas e executar seu checklist. A primeira execução CI/CD, secrets, proteção e dados cloud permanecem pendentes; até lá, não há prontidão completa declarada.
+A reprodução local, o CI/CD e a preservação dos dados compartilhados estão no [registro de validação](validacao-spec-001.md). Rebeca e Paulo ainda precisam autorizar/testar as próprias contas e executar seu checklist. As evidências da sessão de João não comprovam instalação nem permissões pessoais dos colegas. A promoção da correção de grants e as limitações de proteção/revisão estão registradas em [BT-006](ci-cd.md).
