@@ -1,14 +1,22 @@
-# Validação parcial da SPEC-001 e entrada da equipe
+# Validação da SPEC-001 e entrada da equipe
 
 2026-10-18 · [SPEC-001](https://trello.com/c/vWo76DXs) ·
 [BT-007](https://trello.com/c/iZhZxnWc).
 
-**Base local reproduzida; prontidão completa pendente.** BT-001 a BT-005 foram
-integrados em `integration/spec-001`, publicada em 2026-10-20 no
-[PR #1](https://github.com/Rebecamarini/FixIt/pull/1). BT-006 e o critério
-remoto de BT-007 permanecem incompletos. O registro de 2026-10-18 abaixo é
-histórico; a ativação remota de 2026-10-20 está em [BT-006](ci-cd.md).
-Ainda não há migrations de domínio ou carga de dados cloud comprovadas.
+**Base técnica integrada e validada em 2026-10-20.**
+Os [PRs #1](https://github.com/Rebecamarini/FixIt/pull/1) e
+[#3](https://github.com/Rebecamarini/FixIt/pull/3) foram integrados à `main`.
+O SHA final de código `561d89425e1beec1fba8a009893e9aef8757df4c` passou
+[CI/CD](https://github.com/Rebecamarini/FixIt/actions/runs/39514989761):
+cinco migrations, lint, tipos, build, cinco unitários e 26 integrações reais,
+sem falhas/skips. O cloud recebeu somente migrations pendentes; a preparação
+repetida preservou quatro contas/perfis, 43 solicitações e 43 eventos,
+incluindo registro independente. Sessões reais, privilégios e isolamento
+passaram após a correção incremental de grants de identidade.
+O [registro de BT-006](ci-cd.md#promoções-e-dados-compartilhados--2026-10-20)
+contém jobs, horários, hash e limites. Os registros abaixo preservam a
+reprodução histórica de 2026-10-18 e as rodadas seguintes; entrada individual
+e aprovação formal humana não são inferidas dessas verificações.
 
 ## Reprodução local desde checkout limpo
 
@@ -117,17 +125,43 @@ consultas de leitura, contratos e responsabilidades. Clonar não instala skills
 nem transfere autorizações. Não foram enviados convites/mensagens ou criados
 recursos externos durante essas verificações.
 
-## Pendências que impedem o aceite completo
+## Estado compartilhado e entrada individual — 2026-10-20
 
-- Revisar/integrar o PR publicado pela `main` do repositório correto com acesso autorizado.
-- Configurar secrets e conferir proteção/revisão/checks realmente ativos ou sua limitação.
-- Executar CI do SHA final integrado em `main` e promover migrations do mesmo SHA;
-  comprovar reaplicação, preservação, bloqueio por falha e ausência de sobreposição.
-- Preparar/validar quatro sessões reais e dados fictícios cloud após promoção aprovada,
-  com carga repetida sem duplicação e isolamento; seguir [BT-006](ci-cd.md).
-- Rebeca e Paulo instalarem/conferirem skills, conectarem suas próprias contas e
-  executarem a preparação local em suas máquinas.
+A integração, os secrets usados pelo CD, as duas promoções do mesmo SHA, a
+carga repetida e a preservação dos dados cloud foram comprovados. A falha real
+de lint em PR separado e a configuração `needs: ci` são evidências distintas:
+o skip em PR também decorre da condição de evento. Duas promoções sequenciais
+comprovam ausência de sobreposição observada; não são teste de disputa pela
+fila. Veja [BT-006](ci-cd.md) para os limites completos.
 
-Esta evidência não encerra BT-006/BT-007 nem as histórias funcionais da Sprint 1.
-O [guia local](desenvolvimento-local.md) permite repetir os comandos; os registros
-históricos/importados permanecem preservados.
+A conta `Jrmelo317` agora possui push, sem administração. `main` permanece sem
+proteção/ruleset ativo comprovado. O merge inicial pelo usuário é fato
+registrado; os PRs #1 e #3 não possuem
+aprovação humana formal `APPROVED`. A correção foi revista por dois agentes
+independentes (padrões/especificação), sem achados, e integrada dentro da
+autorização de concluir a entrega. Revisão de colega/CI permanecem convenção,
+separada dessas revisões técnicas automatizadas.
+O advisor cloud de segurança registra um WARN de proteção contra senhas
+vazadas, recurso pago não habilitado no projeto gratuito; três INFO de índices
+FK sem uso constam no advisor de desempenho, sem WARN/ERROR nesse advisor.
+
+A correção incremental `20261020231724_identity_explicit_client_grants` foi
+promovida pelo CI/CD do SHA final. Às 23:30:53 UTC, o cloud tinha cinco
+migrations, quatro usuários/perfis e 43 solicitações/eventos. Leitura anônima
+de perfis e tentativa autenticada de promover o próprio papel foram recusadas
+com `42501`; o papel permaneceu `Cliente`. A carga padrão foi repetida após
+essa promoção; o SHA-256 das linhas ordenadas continuou
+`31b424714218fa68a9387ce6a4567000d0fd4b049d83df211c83de9031bc5751`,
+igual às leituras anteriores à repetição inicial e após a reaplicação.
+Não houve reset, exclusão de dados, DDL manual cloud ou publicação do Next.js.
+A atualização documental passa por PR, revisão e CI antes da integração;
+as evidências executadas em `main` referem-se aos SHAs explicitamente indicados.
+
+Rebeca e Paulo ainda precisam instalar/conferir skills, conectar suas próprias
+contas e repetir a preparação local em suas máquinas. O guia e a evidência da
+sessão de João não comprovam essas autorizações pessoais. Essas etapas de
+entrada individual continuam no [checklist da equipe](inicio-equipe.md#checklist-de-entrada).
+
+A base técnica não encerra as histórias funcionais da Sprint 1. Os contratos,
+o [guia local](desenvolvimento-local.md) e os registros históricos/importados
+permanecem como referência para as próximas frentes.

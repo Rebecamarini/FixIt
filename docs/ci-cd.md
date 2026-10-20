@@ -2,13 +2,13 @@
 
 [BT-006](https://trello.com/c/3W4Ajz0j) · [SPEC-001](https://trello.com/c/vWo76DXs).
 
-**Publicado para revisão; aceite remoto pendente.** Em 2026-10-20, a conta
-GitHub `Jrmelo317` possui push, mas não administração, em `Rebecamarini/FixIt`.
-A implementação está no [PR #1](https://github.com/Rebecamarini/FixIt/pull/1),
-branch `integration/spec-001`, SHA
-`e5231441b5eb96ebbfd1b82a83b6d2fc54dae221`. A publicação não representa
-integração em `main` nem deploy cloud. BT-006 permanece incompleto até as
-evidências abaixo.
+**Base técnica integrada e CI/CD cloud comprovado em 2026-10-20.**
+Os [PRs #1](https://github.com/Rebecamarini/FixIt/pull/1) e
+[#3](https://github.com/Rebecamarini/FixIt/pull/3) estão integrados em `main`.
+O SHA `561d89425e1beec1fba8a009893e9aef8757df4c` passou CI/CD, com cinco
+migrations aplicadas e dados cloud preservados após repetição. As evidências
+abaixo distinguem promoção, reaplicação e isolamento efetivamente executados
+dos limites de revisão humana, proteção da branch e entrada individual.
 
 ## Verificação e promoção
 
@@ -60,8 +60,9 @@ do Auth. A [configuração cloud do Auth](supabase-cloud.md) é procedimento sep
 
 O grupo de concorrência `supabase-gifqssocvuieagmndxwy`, no job de promoção,
 tem `cancel-in-progress: false`: um push novo não cancela a migration ativa.
-GitHub mantém no máximo um job ativo e um pendente por grupo, pode substituir
-o pendente e não garante ordem FIFO. Portanto nem todo commit intermediário
+Com a configuração padrão usada aqui, GitHub mantém no máximo um job ativo e
+um pendente por grupo e pode substituir o pendente. A ordem dos pushes não
+garante a ordem das promoções. Portanto nem todo commit intermediário
 necessariamente é promovido. Não execute outro workflow ou deploy manual em
 paralelo; eles precisam respeitar a mesma coordenação. Um timeout/falha exige
 inspecionar o histórico antes de repetir, sem reset remoto.
@@ -161,7 +162,7 @@ revisão administrativa; não apague registros para forçar sucesso.
   Auth comum sem confirmação; proteção/checks efetivamente ativos ou limitação
   registrada.
 
-## Ativação remota — 2026-10-20
+## Primeira validação remota em PR — 2026-10-20
 
 O [PR #1](https://github.com/Rebecamarini/FixIt/pull/1), no SHA
 `e5231441b5eb96ebbfd1b82a83b6d2fc54dae221`, concluiu o
@@ -193,7 +194,7 @@ foi removida após capturar a evidência. A falha deliberada não entrou em
 da condição de evento; esta prova demonstra falha real do CI, enquanto o gate
 `needs: ci` permanece verificado na configuração do workflow.
 
-### Limitações de ativação
+### Limitações na rodada anterior à integração
 
 Na consulta inicial desta sessão, a lista de repository secrets estava vazia.
 Depois, `SUPABASE_PROJECT_ID` foi configurado separadamente pelo responsável
@@ -207,11 +208,11 @@ secrets.
 atual não possui administração; o endpoint de permissões de Actions retornou
 HTTP 403, embora as execuções sejam acessíveis. Portanto não há proteção de
 branch comprovada. Revisão por colega e CI aprovado continuam sendo condições
-explícitas antes da integração; nenhum merge em `main` foi feito por esta
-validação.
+explícitas antes da integração; até o fim daquela rodada, não havia merge em
+`main`.
 
-Continuam pendentes promoção em `main` do mesmo SHA aprovado, validação das
-credenciais no CD, revisão de colega, reaplicação, concorrência real, preservação
+Ao encerrar aquela rodada, permaneciam pendentes promoção em `main` do mesmo
+SHA aprovado, validação das credenciais no CD, revisão de colega, reaplicação, concorrência real, preservação
 e preparação/validação de dados cloud. O ensaio de falha em PR não comprova execução do gate
 no evento push: a promoção também fica ignorada em PR pela condição de evento.
 A dependência `needs: ci` é a garantia estática registrada separadamente.
@@ -219,3 +220,104 @@ A dependência `needs: ci` é a garantia estática registrada separadamente.
 Referências: [deploys Supabase](https://supabase.com/docs/guides/deployment/managing-environments),
 [dependências de jobs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs),
 [concorrência GitHub](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
+
+## Promoções e dados compartilhados — 2026-10-20
+
+O usuário integrou o PR #1 às **23:11:07 UTC**, pela conta `Jrmelo317`. O
+GitHub registra o merge `ecbb8fc6c080c5ccb957e575d1af8e5f2f7222dc`.
+A [execução de push/main](https://github.com/Rebecamarini/FixIt/actions/runs/39513315989)
+fez checkout desse SHA nos dois jobs. Em cada tentativa completa, CI passou
+lint, tipos, build, cinco testes unitários e 26 integrações reais, sem
+falhas/skips, com stack descartável completa e cleanup aprovado.
+
+| Tentativa | CI (UTC) | Promoção (UTC) | Resultado remoto |
+| --- | --- | --- | --- |
+| [1](https://github.com/Rebecamarini/FixIt/actions/runs/39513315989/attempts/1) | [118939379731](https://github.com/Rebecamarini/FixIt/actions/runs/39513315989/job/118939379731), 23:11:12–23:14:35 | [118940649367](https://github.com/Rebecamarini/FixIt/actions/runs/39513315989/job/118940649367), 23:14:37–23:15:01 | Quatro migrations aplicadas; `Finished supabase db push.` |
+| [2](https://github.com/Rebecamarini/FixIt/actions/runs/39513315989/attempts/2) | [118942142976](https://github.com/Rebecamarini/FixIt/actions/runs/39513315989/job/118942142976), 23:18:38–23:22:04 | [118943404750](https://github.com/Rebecamarini/FixIt/actions/runs/39513315989/job/118943404750), 23:22:06–23:22:40 | `Remote database is up to date.` |
+
+As quatro migrations iniciais foram `20261017192224`, `20261018150507`,
+`20261018152845` e `20261018152923`. A segunda tentativa reexecutou todos os
+jobs, preservando evento, ref e SHA originais, conforme o
+[comportamento documentado de reruns](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).
+As duas promoções elegíveis têm intervalos reais sem sobreposição e nenhuma
+foi cancelada. Como foram sequenciais, não exercitaram disputa simultânea nem
+fila de espera; a exclusão mútua também foi conferida separadamente no grupo
+estático do workflow. Não houve novo push artificial ou deploy manual para
+produzir essa evidência.
+
+Após a primeira promoção, o cadastro comum da primeira conta Cliente usou o
+contrato SSR real: houve sessão, cookies e confirmação automática, sem ação
+por e-mail. Metadados tentando atribuir `Gestor` resultaram em perfil `Cliente`.
+Essa conta foi preservada e identificada administrativamente como fixture;
+a rotina padrão criou/verificou as demais três contas. Essa etapa adicional
+comprova o cadastro comum; não é requisito oculto da rotina administrativa.
+
+A preparação explícita foi repetida, preservando as quatro contas/perfis,
+42 solicitações/eventos de exemplo e uma solicitação/evento fictício
+independente criado pelo primeiro Cliente antes da repetição. Total: **43
+solicitações e 43 eventos**, com 22 itens do primeiro Cliente e 21 do segundo.
+As sessões reais das quatro contas passaram; listagem paginada, detalhe e
+histórico próprios funcionaram, enquanto dados alheios permaneceram
+inacessíveis pelo contrato do servidor e pela API direta.
+
+A comparação das linhas ordenadas, incluindo IDs e instantes, manteve o
+SHA-256 `31b424714218fa68a9387ce6a4567000d0fd4b049d83df211c83de9031bc5751`
+após a carga repetida e após a segunda promoção, conferida às 23:23:40 UTC.
+O diagnóstico cloud também confirmou Auth, REST e Storage. Não foi executada
+a suíte destrutiva de integração no cloud, nem reset remoto.
+
+### Privilégios e limites operacionais
+
+A validação cloud encontrou privilégios `ALL` herdados para `anon` e
+`authenticated` em `perfis` e `setores`; RLS restringia as linhas, mas esses
+grants divergiam do contrato mínimo. A correção usa migration nova, preservando
+as quatro já integradas, e segue o mesmo CI/CD; não houve DDL manual no cloud.
+O PR #3 passou no [CI de PR](https://github.com/Rebecamarini/FixIt/actions/runs/39514496812)
+e foi integrado às 23:26:04 UTC pela conta `Jrmelo317`, sem bypass de proteção.
+O [CI/CD de push/main](https://github.com/Rebecamarini/FixIt/actions/runs/39514989761),
+SHA `561d89425e1beec1fba8a009893e9aef8757df4c`, concluiu com sucesso:
+
+| Job | Intervalo UTC | Evidência |
+| --- | --- | --- |
+| [CI 118944886958](https://github.com/Rebecamarini/FixIt/actions/runs/39514989761/job/118944886958) | 23:26:09–23:29:20 | Cinco migrations desde banco local vazio, lint, tipos, build, cinco unitários e 26 integrações aprovados, sem falhas/skips; cleanup aprovado. |
+| [Promoção 118946022522](https://github.com/Rebecamarini/FixIt/actions/runs/39514989761/job/118946022522) | 23:29:22–23:29:48 | Aplicou somente `20261020231724_identity_explicit_client_grants.sql`; `Finished supabase db push.` |
+
+Às **23:30:53 UTC**, o histórico cloud continha as cinco migrations. A
+conferência de privilégios confirmou ausência de INSERT/UPDATE/DELETE/TRUNCATE
+para `anon` e `authenticated` nas duas tabelas. SELECT ficou somente em
+`setores` para ambos e em `perfis` para autenticados. A API anônima recusou
+leitura de `perfis` com `42501`; a tentativa autenticada de alterar o próprio
+papel para `Gestor` também retornou `42501`, preservando `Cliente`.
+
+A preparação padrão foi executada novamente após a quinta migration. As
+quatro contas/perfis e 43 solicitações/eventos mantiveram o mesmo SHA-256
+registrado acima, incluindo o registro independente. Quatro sessões SSR,
+paginação dos Clientes (22/21), detalhe/histórico próprios, a mesma resposta
+404 para dados alheios e isolamento pela API direta passaram novamente.
+Auth/REST/Storage continuaram acessíveis. Nenhum dado foi removido para obter
+sucesso, e nenhuma migration integrada foi editada.
+
+A conta atual tem push, sem administração. `main` está com `protected: false`
+e sem rulesets ativos comprovados. Os três secrets foram configurados e o
+sucesso do CD validou seu uso, sem divulgar valores. Os PRs #1 e #3 não
+possuem revisão humana formal
+`APPROVED` registrada. O usuário realizou o merge inicial; a correção passou
+por revisões automatizadas independentes de padrões e especificação, sem
+achados, e foi integrada pelo agente dentro da autorização de concluir a
+entrega. A conta efetiva dos merges foi `Jrmelo317`. Revisão automatizada é
+evidência distinta de aprovação humana. Exigir PR, revisão de colega e CI
+permanece convenção da equipe; proteção de branch não é declarada ativa.
+
+Os advisors cloud de segurança retornaram um **WARN**,
+`auth_leaked_password_protection`. A proteção contra senhas vazadas está
+desabilitada e exige [plano Pro ou superior](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+O projeto permanece gratuito, conforme a restrição de custo; nenhuma contratação
+foi feita. Advisors de desempenho retornaram três **INFO** de índices de chaves
+estrangeiras ainda sem uso (`perfis_setor_id`, `solicitacoes_categoria_id` e
+`historico_autor_id`), zero WARN/ERROR. Esses índices foram mantidos para os
+vínculos previstos; uma carga de 43 exemplos não justifica removê-los.
+
+Os resultados executados em `main` pertencem aos SHAs indicados. A atualização
+documental passa por PR, revisão e CI antes da integração; ela não altera
+as evidências dos commits anteriores. O Next.js continua local; esta entrega não publica endereço
+web nem transfere credenciais/conexões pessoais dos colegas.
