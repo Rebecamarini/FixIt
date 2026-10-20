@@ -293,7 +293,8 @@ A preparação padrão foi executada novamente após a quinta migration. As
 quatro contas/perfis e 43 solicitações/eventos mantiveram o mesmo SHA-256
 registrado acima, incluindo o registro independente. Quatro sessões SSR,
 paginação dos Clientes (22/21), detalhe/histórico próprios, a mesma resposta
-404 para dados alheios e isolamento pela API direta passaram novamente.
+`nao_encontrado` para UUIDs inexistentes/alheios e listas vazias pela API direta
+passaram novamente.
 Auth/REST/Storage continuaram acessíveis. Nenhum dado foi removido para obter
 sucesso, e nenhuma migration integrada foi editada.
 
