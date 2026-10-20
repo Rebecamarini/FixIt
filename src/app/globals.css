@@ -1,0 +1,5 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #172b35; background: #f4f7f8; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: #075b72; text-underline-offset: 0.2em; }
+a:focus-visible { outline: 3px solid #075b72; outline-offset: 4px; }
