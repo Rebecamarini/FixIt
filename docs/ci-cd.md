@@ -75,9 +75,13 @@ Repository secrets**, com estes nomes exatos:
 
 | Secret | Valor/origem |
 | --- | --- |
-| `SUPABASE_ACCESS_TOKEN` | Token pessoal com acesso ao projeto; preferir token com escopo mínimo necessário à CLI/migrations. |
+| `SUPABASE_ACESS_TOKEN` | Token pessoal com acesso ao projeto; preferir token com escopo mínimo necessário à CLI/migrations. |
 | `SUPABASE_PROJECT_ID` | `gifqssocvuieagmndxwy` (identifica o destino, sem ser senha). |
 | `SUPABASE_DB_PASSWORD` | Senha do PostgreSQL deste projeto; distinta da senha de teste/Auth e do token pessoal. |
+
+Por decisão explícita do usuário em 2026-10-20, o nome do secret no GitHub
+é `SUPABASE_ACESS_TOKEN` (um C). O workflow mapeia esse secret para a variável
+`SUPABASE_ACCESS_TOKEN` (dois Cs), exigida pela CLI Supabase.
 
 O token deve permitir as operações exigidas pelo comando da CLI; teste sem
 ampliar permissões indiscriminadamente. A documentação oficial descreve os
@@ -192,9 +196,12 @@ da condição de evento; esta prova demonstra falha real do CI, enquanto o gate
 ### Limitações de ativação
 
 Na consulta inicial desta sessão, a lista de repository secrets estava vazia.
-`SUPABASE_PROJECT_ID` foi configurado separadamente pelo responsável pela
-ativação; token e senha do banco continuam pendentes de configuração privada.
-Autenticação pessoal na CLI não substitui esses secrets.
+Depois, `SUPABASE_PROJECT_ID` foi configurado separadamente pelo responsável
+pela ativação. A consulta atual confirmou os nomes `SUPABASE_ACESS_TOKEN`,
+`SUPABASE_DB_PASSWORD` e `SUPABASE_PROJECT_ID` configurados. Os valores não
+foram acessados nem validados; a existência dos nomes não comprova acesso ao
+projeto ou credenciais válidas. Autenticação pessoal na CLI não substitui esses
+secrets.
 
 `main` retornou `protected: false` e a lista de rulesets retornou vazia. A conta
 atual não possui administração; o endpoint de permissões de Actions retornou
@@ -203,9 +210,9 @@ branch comprovada. Revisão por colega e CI aprovado continuam sendo condições
 explícitas antes da integração; nenhum merge em `main` foi feito por esta
 validação.
 
-Continuam pendentes promoção em `main` do mesmo SHA aprovado, secrets restantes,
-revisão de colega, reaplicação, concorrência real, preservação e preparação/
-validação de dados cloud. O ensaio de falha em PR não comprova execução do gate
+Continuam pendentes promoção em `main` do mesmo SHA aprovado, validação das
+credenciais no CD, revisão de colega, reaplicação, concorrência real, preservação
+e preparação/validação de dados cloud. O ensaio de falha em PR não comprova execução do gate
 no evento push: a promoção também fica ignorada em PR pela condição de evento.
 A dependência `needs: ci` é a garantia estática registrada separadamente.
 
