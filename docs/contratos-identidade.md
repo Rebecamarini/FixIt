@@ -53,6 +53,12 @@ constraint impede ambos os registros. Clientes não têm grants de INSERT,
 UPDATE ou DELETE em perfis, inclusive para alterar o papel. Papéis privilegiados
 não recebem acesso antecipado a perfis alheios nesta preparação.
 
+A migration `20261020231724_identity_explicit_client_grants` revoga os grants
+de `anon`/`authenticated` nas duas tabelas e concede somente as leituras acima.
+Isso torna o contrato independente dos grants automáticos de novas tabelas em
+`public`, que variam entre projetos Supabase. RLS continua limitando as linhas
+visíveis; `anon` recebe erro de permissão ao consultar `perfis`.
+
 Erros observáveis do SDK: `AuthApiError` (credenciais inválidas, senha curta,
 e-mail inválido/duplicado); regras do trigger podem aparecer como erro genérico
 `Database error saving new user` sem revelar duplicidade ou detalhes internos.
