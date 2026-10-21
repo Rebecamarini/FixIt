@@ -1,6 +1,6 @@
 # SPEC-001 — Base técnica executável do FixIt
 
-Status de execução em **2026-10-18: em implementação, aceite parcial**. BT-001 a BT-005 implementados na integração local; BT-006 preparado, bloqueado por acesso GitHub para publicação, secrets e execução remota. BT-007 consolida o guia e a reprodução local, sem prontidão completa. Consulte a [validação da SPEC-001](../validacao-spec-001.md).
+Status de execução em **2026-10-20: base técnica integrada e validada**. BT-001 a BT-007 têm implementação e evidências compartilhadas consolidadas: cinco migrations na `main` e no cloud, CI/CD aprovado, reaplicação e carga repetida sem alterar os dados. A revisão formal humana não está registrada nos PRs, `main` permanece sem proteção ativa comprovada e cada colega ainda configura suas próprias ferramentas/conexões. Consulte a [validação da SPEC-001](../validacao-spec-001.md) para SHAs, resultados e limites; os requisitos aprovados abaixo permanecem preservados.
 
 Os requisitos abaixo preservam a especificação aprovada no grill de 2026-10-17, originalmente `ready-for-agent`. As notas da entrevista no final são históricas; o estado operacional atual está no registro de validação.
 
