@@ -13,6 +13,7 @@ export default defineConfig([
       "max-depth": ["error", 4],
       "max-lines-per-function": ["error", {
         max: 50,
+        IIFEs: true,
         skipBlankLines: true,
         skipComments: true,
       }],

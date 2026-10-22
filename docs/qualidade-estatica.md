@@ -72,6 +72,8 @@ a versão do ESLint. Profundidade segue blocos do AST, não indentação ou árv
 JSX. O tamanho conta da assinatura ao fechamento, inclusive ambos, linhas JSX
 e corpos de callbacks dentro da função externa. Ignora somente linhas vazias e
 linhas inteiramente de comentário. Uma linha com código e comentário conta.
+`IIFEs: true` inclui funções imediatamente invocadas, ignoradas pelo default
+da regra; elas também precisam atender ao limite individual.
 
 Complexidade 10 é política do FixIt, fundamentada no
 [NIST SP 500-235, seção 2.5](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication500-235.pdf),
