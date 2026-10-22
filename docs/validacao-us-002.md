@@ -89,6 +89,45 @@ Capturas com contas fictícias:
 - [Excesso de tentativas em celular](evidencias/us-002/limite-mobile.png).
 - [Indisponibilidade em desktop](evidencias/us-002/indisponibilidade-desktop.png).
 
+## Verificações automatizadas
+
+- `npm run lint`: aprovado, sem avisos.
+- `npm run typecheck`: aprovado; também executado durante os ciclos de integração.
+- `npm run build`: aprovado; navegador repetido no build de produção.
+- `npm test`: 7 testes aprovados.
+- `sg docker -c 'npm run test:integration'`: 34 verificações aprovadas, sem skips.
+- `git diff --check`: aprovado.
+
+`npm run verify` passou lint, tipos, build e unitários; na etapa de integração,
+33 de 34 verificações passaram e a preparação repetida falhou porque o subprocesso
+da CLI não tinha acesso ao Docker. A repetição da suíte de integração inteira
+com o grupo Docker ativo passou 34/34. Não foi alterada a implementação para
+contornar essa condição do ambiente.
+
+## Revisão code-review
+
+Dois revisores automatizados independentes examinaram o commit `78110f9` contra
+a base `49d4719494bb6698d0dada0a49ac31c537eaec56`.
+
+### Standards
+
+Nenhuma violação dos padrões documentados. Uma sugestão opcional de baixa
+prioridade: possível duplicação da preparação administrativa de contas nos três
+novos cenários de integração. Os arranjos foram mantidos locais aos testes;
+extrair outro helper não é necessário para os comportamentos verificados.
+As demais heurísticas não produziram achados relevantes.
+
+### Spec
+
+Nenhuma omissão corrigível, comportamento incorreto ou expansão de escopo.
+Um bloqueio de aceite integrado conhecido: CA-03 exige a tela real de
+solicitações, cujo desenvolvimento está fora desta tarefa. A revisão confirma
+que a evidência de sessão permite avançar, sem concluir esse critério ou o card.
+
+Resultado: Standards — 0 violações e 1 sugestão opcional; Spec — 0 achados
+corrigíveis e 1 bloqueio de aceite integrado. A atualização posterior a essa
+revisão registra somente os resultados das verificações e da própria revisão.
+
 ## Pendência obrigatória de integração
 
 - Blocked by: https://trello.com/c/3ouBfqLb (US-006, alternativa).
