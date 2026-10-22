@@ -21,7 +21,11 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "prepare:test-data": "node --conditions=react-server scripts/prepare-test-data.ts"
+    "prepare:test-data": "node --conditions=react-server scripts/prepare-test-data.ts",
+    "check:duplicates": "jscpd src --config .jscpd.json",
+    "check:dependencies": "depcruise src --config .dependency-cruiser.cjs --output-type err && depcruise src --config .dependency-cruiser.cjs --metrics --output-type metrics",
+    "check:unused": "knip --no-progress",
+    "check:static": "npm run lint && npm run check:duplicates && npm run check:dependencies && npm run check:unused"
   },
   "dependencies": {
     "@supabase/ssr": "0.10.3",
@@ -35,8 +39,11 @@
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "dependency-cruiser": "18.7.0",
     "eslint": "9.39.1",
     "eslint-config-next": "16.4.2",
+    "jscpd": "5.4.2",
+    "knip": "6.42.1",
     "supabase": "2.121.0",
     "typescript": "5.9.3"
   }

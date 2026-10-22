@@ -25,3 +25,6 @@ Na branch da [US-001](https://trello.com/c/nxKsfzLE), o autocadastro está integ
 A [SPEC-001 — Base técnica](https://trello.com/c/vWo76DXs) consolida o trabalho aprovado, incluindo CI/CD e entrada da equipe. Há uma [cópia local da especificação](docs/specs/base-tecnica.md).
 
 As tarefas são acompanhadas no [Trello](https://trello.com/b/SsT0I7Di/backlog-do-produto-fixit). João mantém usuários/autenticação; Paulo, criação/envio; Rebeca, consulta/autorização. A preparação não encerra as histórias do produto.
+
+As metas de manutenção e seus comandos de CI estão em
+[Qualidade estática — SPEC-002](docs/qualidade-estatica.md).

@@ -12,16 +12,25 @@ export type AccountState = {
 const cadastroRecusado = "Não foi possível cadastrar. Verifique os dados; e-mail e matrícula devem ser únicos.";
 const indisponivel = "Não foi possível acessar o FixIt. Tente novamente em instantes.";
 
-export async function cadastrarCliente(client: SupabaseClient, form: FormData): Promise<AccountState> {
-  const text = (name: string) => typeof form.get(name) === "string" ? String(form.get(name)).trim() : "";
-  const values = { nome: text("nome"), email: text("email"), matricula: text("matricula"), setor_id: text("setor_id") };
-  const senha = form.get("senha");
+function formText(form: FormData, name: string) {
+  const value = form.get(name);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function validarCadastro(values: NonNullable<AccountState["values"]>, senha: FormDataEntryValue | null) {
   const errors: Record<string, string> = {};
   if (!values.nome) errors.nome = "Informe seu nome.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errors.email = "Informe um e-mail válido.";
   if (typeof senha !== "string" || senha.length < 8) errors.senha = "A senha deve ter pelo menos 8 caracteres.";
   if (!values.matricula) errors.matricula = "Informe sua matrícula.";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(values.setor_id)) errors.setor_id = "Selecione um setor válido.";
+  return errors;
+}
+
+export async function cadastrarCliente(client: SupabaseClient, form: FormData): Promise<AccountState> {
+  const values = { nome: formText(form, "nome"), email: formText(form, "email"), matricula: formText(form, "matricula"), setor_id: formText(form, "setor_id") };
+  const senha = form.get("senha");
+  const errors = validarCadastro(values, senha);
   if (Object.keys(errors).length) return { values, errors, message: "Confira os campos indicados." };
 
   try {
@@ -49,7 +58,7 @@ export async function cadastrarCliente(client: SupabaseClient, form: FormData): 
 }
 
 export async function entrarNaConta(client: SupabaseClient, form: FormData): Promise<AccountState> {
-  const email = typeof form.get("email") === "string" ? String(form.get("email")).trim() : "";
+  const email = formText(form, "email");
   const senha = form.get("senha");
   const values = { nome: "", email, matricula: "", setor_id: "" };
   if (!email || typeof senha !== "string" || !senha) return { values, message: "Informe e-mail e senha." };
