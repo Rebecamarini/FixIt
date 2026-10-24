@@ -142,3 +142,44 @@ reescrever identidades existentes. A primeira valida constraints sobre os perfis
 atuais: se houver nome/matrícula não normalizados, a promoção falha e exige
 reconciliação administrativa explícita antes de repetir, evitando colisões ou
 mudança silenciosa de matrícula. As duas migrations originais ficam preservadas.
+
+## Perfil e credenciais — US-003
+
+[Spec](https://trello.com/c/dnMogmjC) · [T01](https://trello.com/c/QwPZeKPc) ·
+[T02](https://trello.com/c/BAQgjkFB) · [T03](https://trello.com/c/sLaHxNCC).
+
+A migration `20261024194318_profile_self_update` amplia a permissão anterior
+somente para UPDATE de `nome`, `matricula` e `setor_id` da linha própria. ID,
+papel, INSERT e DELETE continuam protegidos. Constraints existentes preservam
+normalização, unicidade e setor cadastrado; a atualização dos três campos usa
+uma única instrução SQL. Não altera históricos nem vínculos.
+
+`consultarPerfil(client)` retorna o perfil próprio com e-mail obtido no Auth;
+`salvarPerfil(client, form)` aceita somente os três campos pessoais.
+`alterarEmail(client, form)` aceita `email` e `senha_atual`;
+`alterarSenha(client, form)` aceita `senha_atual`, `nova_senha`, `confirmar_senha`.
+Todos conferem a identidade no servidor e recusam campos extras de alvo/papel.
+Retornam `ProfileState` com confirmação, erros por campo, aviso sanitizado,
+perda de sessão ou resultado parcial, sem devolver senhas.
+
+A senha atual é verificada em cliente temporário com cookies isolados e logout
+local. A sessão do navegador permanece intacta. A troca de senha usa a identidade
+do usuário, seguida de `signOut({ scope: "others" })`. Tokens já emitidos podem
+continuar válidos até expirar; a sessão atual permanece renovável.
+`encerrarOutrasSessoes(client)` permite repetir somente a revogação após sucesso
+parcial, sem nova troca ou senha atual. Requer sessão e perfil próprios.
+
+Exceção autorizada pelo usuário no [ADR 0004](adr/0004-troca-email-auth-administrativa.md):
+a troca imediata de e-mail usa a capacidade administrativa do Auth, somente após
+validar sessão/perfil/senha atual, com ID derivado da sessão e `email_confirm: true`.
+Exige `SUPABASE_SECRET_KEY` somente no servidor, separada da chave pública;
+nenhuma consulta ou gravação de perfil usa essa chave. O Auth local encapsula
+algumas duplicatas de e-mail em HTTP 500 sem código identificável: nesses casos
+informa resultado não confirmado e possível endereço ocupado, sem afirmar a
+causa ou expor detalhes. O banco continua garantindo unicidade concorrente.
+
+`/conta/perfil` está coberta pelo proxy de `/conta/:path*` e usa renderização dinâmica.
+Os modais mantêm a edição pessoal em estado separado, limpam senhas a cada envio
+e ao fechar, contêm foco e restauram o acionador. Voltar e fechar modal preenchido
+pedem confirmação. Perda de sessão leva ao login com aviso de descarte; o login
+continua destinando à inicial, sem rascunhos persistidos.

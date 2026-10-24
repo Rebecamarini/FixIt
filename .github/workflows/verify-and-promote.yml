@@ -34,7 +34,7 @@ jobs:
             exit 1
           }
           npx --no-install supabase db reset --local --no-seed --yes
-      - name: Configure local public connection without logging keys
+      - name: Configure local server connection without logging keys
         run: |
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
@@ -44,7 +44,7 @@ jobs:
           }));
           const key = status.PUBLISHABLE_KEY ?? status.ANON_KEY;
           if (status.API_URL !== 'http://127.0.0.1:54321' || !key) throw new Error('Invalid local Supabase configuration.');
-          writeFileSync('.env.local', `SUPABASE_TARGET=local\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${key}\n`, { mode: 0o600 });
+          writeFileSync('.env.local', `SUPABASE_TARGET=local\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${key}\nSUPABASE_SECRET_KEY=${status.SECRET_KEY ?? status.SERVICE_ROLE_KEY}\n`, { mode: 0o600 });
           NODE
       - name: Verify lint, types, build, unit and all integration tests
         run: npm run verify
