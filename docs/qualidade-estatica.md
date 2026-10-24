@@ -166,3 +166,6 @@ supressão: `eslint-disable-next-line` da regra específica; marcadores
 aresta específica no grafo quando justificável. Não ampliar limites, ignorar
 uma pasta manual inteira, silenciar falhas ou criar baseline. O suporte a uma
 supressão não dispensa sua justificativa e revisão.
+
+Os ensaios e as execuções com SHA, logs e limitações estão em
+[Validação da SPEC-002](validacao-spec-002.md).
