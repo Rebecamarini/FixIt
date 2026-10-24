@@ -5,7 +5,7 @@ Gestão de solicitações de manutenção e de bens patrimoniais de uma institui
 ## Linguagem
 
 **Cliente**:
-Usuário que solicita manutenção e acompanha somente as próprias solicitações.
+Papel de usuário voltado a solicitar manutenção e acompanhar somente as próprias solicitações. Gestor e Manutentor também podem solicitar manutenção, sem assumir o papel Cliente.
 
 **Manutentor**:
 Usuário responsável pela execução do atendimento das solicitações atribuídas a ele.
@@ -14,8 +14,14 @@ Usuário responsável pela execução do atendimento das solicitações atribuí
 Usuário que administra solicitações, define prioridade e responsáveis e gerencia o patrimônio e os papéis dos usuários.
 
 **Solicitação**:
-Registro de um pedido de manutenção ou denúncia de dano patrimonial, com autoria, estado atual e histórico.
+Registro de um pedido de manutenção, com autoria, estado atual e histórico.
 _Evitar_: Chamado, quando usado como outro nome para o mesmo registro.
+
+**Solicitante**:
+Usuário em cujo nome uma solicitação de manutenção é feita. Pode ser diferente do autor do envio quando um Gestor registra o pedido em nome de outro usuário.
+
+**Autor do envio**:
+Usuário que efetivamente registra a solicitação. Em pedidos feitos pelo Gestor em nome de outra pessoa, a autoria do envio permanece com o Gestor.
 
 **Bem patrimonial**:
 Item do inventário da instituição, identificado por código único e passível de vínculo com solicitações.

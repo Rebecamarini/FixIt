@@ -30,6 +30,8 @@ autores presentes nos originais permanecem nas cópias.
 
 ## Divergências antes de implementar
 
+- Em 2026-10-24, o usuário restringiu as solicitações à manutenção, retirando denúncia de dano patrimonial como finalidade independente. O [ADR 0002](../adr/0002-escopo-manutencao.md) prevalece sobre a redação histórica da US-006 e das fontes importadas. Consulte-o ao definir o escopo de novas specs e implementações.
+- Na mesma entrevista, confirmou criação pelos três papéis e seleção de outro solicitante pelo Gestor, preservando a autoria real do envio. O [ADR 0003](../adr/0003-solicitante-e-autor-do-envio.md) orienta US-006/007/009 e as futuras consultas; prevalece sobre a restrição histórica de criação somente por Cliente. A implementação dessa ampliação ainda está pendente.
 - O README antigo descrevia Spring Boot e React/Flutter separados. O usuário confirmou Next.js com Supabase em 2026-10-17; a arquitetura vigente está no [ADR 0001](../adr/0001-nextjs-supabase.md) e no [README da raiz](../../README.md).
 - A redação da DEC-001 exclui APIs e armazenamento externos, enquanto o Trabalho 02 propõe Supabase gerenciado. Em 2026-10-17, o usuário confirmou Supabase como infraestrutura do próprio FixIt, permitindo Auth, banco e futuramente Storage. A exceção está registrada no ADR 0001; o cartão ainda não foi atualizado.
 - BCE/Singleton e a comunicação direta navegador–Supabase nos trabalhos anteriores são históricos. O usuário confirmou operações de dados pelo servidor Next.js e adaptação de BCE por responsabilidades, sem classes/Singleton obrigatórios. Consulte o [registro da entrevista](../base-tecnica.md); as cópias importadas permanecem preservadas.

@@ -1,0 +1,9 @@
+# Solicitação por todos os papéis e autoria preservada
+
+Na entrevista da US-006, em 2026-10-24 (Q8–Q12), o usuário confirmou que Cliente, Manutentor e Gestor podem solicitar manutenção sem trocar de papel. Cliente e Manutentor solicitam somente em nome próprio. Gestor pode solicitar em nome próprio ou selecionar qualquer usuário ativo do FixIt, independentemente do papel; “Em meu nome” é o padrão.
+
+Solicitante é a pessoa em cujo nome o pedido é feito; autor do envio é quem o registra sob sua identidade autenticada. Em nome próprio, ambos coincidem. Quando um Gestor envia por outra pessoa, o histórico preserva o Gestor como autor do envio e a pessoa selecionada como solicitante. A distinção permite representação sem perder a responsabilidade pelo registro; substituir simplesmente a autoria pela pessoa selecionada apagaria essa informação.
+
+Essa decisão altera o contrato vigente, no qual apenas Cliente pode criar e `autor_id` acumula autoria e referência para acesso próprio. US-006 entrega apenas abertura e cancelamento para os três papéis. US-007 entrega a escolha de solicitante no formulário do Gestor. US-009 deve adaptar modelo, contrato, autorização no servidor e banco e histórico, preservando os registros existentes e validando que o usuário selecionado está ativo no momento do envio. A identidade do autor vem da sessão; somente o Gestor pode indicar outro solicitante, inclusive diante de chamadas diretas ou manipuladas. O nome de novas colunas e a estratégia de migração pertencem à implementação dessas histórias; os conceitos e permissões estão decididos.
+
+A possibilidade de criar não concede acesso geral às solicitações de terceiros. As histórias de consulta deverão considerar a distinção entre solicitante e autor ao aplicar suas regras de visibilidade. O código atual ainda não implementa esta ampliação; consulte o [contrato de solicitações](../contratos-solicitacoes.md) para o comportamento vigente.

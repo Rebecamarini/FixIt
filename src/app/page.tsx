@@ -28,6 +28,7 @@ export default async function Home() {
       {sessionError ? <p role="alert">Não foi possível verificar sua sessão. Tente novamente em instantes.</p> : nome ? <section aria-label="Sua conta">
         <p>Olá, {nome}!</p>
         <p>Você entrou no FixIt.</p>
+        <p><Link href="/solicitacoes/nova">Nova solicitação</Link></p>
         <LogoutForm />
       </section> : <nav aria-label="Acesso"><Link href="/conta/entrar">Entrar</Link>{" · "}<Link href="/conta/cadastrar">Criar conta</Link></nav>}
       <section className={styles.connection} aria-labelledby="connection-title">
