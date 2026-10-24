@@ -71,8 +71,9 @@ com 50 pares `identificador;` formando exatamente 100 tokens, distribuídos em
 cópias de 300 linhas (`clone_0;` a `clone_299;`) e um terceiro arquivo de
 identificadores diferentes para completar cada denominador. O detector nativo
 contou 300 linhas duplicadas, não 600; essa é a semântica documentada de D.
-Somente nesse ensaio foi usado reporter JSON temporário para ler os valores
-sem arredondamento do console; o CI usa os logs nativos e não exige artefato.
+Nos ensaios locais de duplicidade foi usado reporter JSON temporário; no
+ensaio percentual, ele permitiu ler os valores sem arredondamento do console.
+O CI usa os logs nativos e não exige artefato.
 
 ## Execução remota válida — 2026-10-22
 
