@@ -14,8 +14,9 @@ isso não afirma integração em `main` nem conclusão do fluxo de aceite humano
 A complementação está na worktree `FixIt-us002-final`, branch
 `feat/us-002-validacao-final`, baseada nesse head. Reutiliza o script de navegador
 da US-006 e acrescenta a prova de novo login com destino inicial após logout ou
-sessão inválida/não renovável. Sem alteração do código de produção, commits,
-push ou novo PR nesta retomada. As alterações do checkout original foram preservadas.
+sessão inválida/não renovável, sem alteração do código de produção.
+As alterações do checkout original foram preservadas. A autorização de publicação
+vigente está registrada na reconferência abaixo.
 
 ### Reconferência de 2026-10-25
 
@@ -25,7 +26,7 @@ US-003 e suas alterações locais. Os PRs #5 e #8 foram consultados ao vivo e
 continuam abertos, nos mesmos SHAs registrados acima. O CI do PR #8 terminou
 com sucesso na [execução 40121615769](https://github.com/Rebecamarini/FixIt/actions/runs/40121615769).
 Esse resultado pertence ao head publicado `e9daa8455edb613cae4ddb98afe9e066cfa438d8`,
-não ao complemento local ainda não publicado.
+não ao novo head do complemento; seu CI deve ser conferido após a publicação.
 
 `sg docker -c 'npm run verify'` foi executado novamente nesta worktree:
 lint sem avisos, tipos, build, **7/7 unitários e 34/34 integrações reais**, sem
@@ -58,13 +59,13 @@ lint e push continuam pelo gate; nenhum check remoto será considerado aprovado
 por ter sido pulado na ferramenta.
 
 Publicação preparada: branch `feat/us-002-validacao-final`, PR de complemento
-com base em `feat/us-006-criar-solicitacao` (#8), para mostrar somente os três
-arquivos alterados. Após publicar, conferir o CI do novo head e
+com base em `feat/us-006-criar-solicitacao` (#8), para isolar o complemento
+da entrega já publicada. Após publicar, conferir o CI do novo head e
 registrar o link no card. Não incluir o trabalho independente da US-003 ou da
 SPEC-002 e não fazer merge automático.
 
 O card foi atualizado com os resultados locais, o CI já publicado da base e a
-autorização necessária para publicar o complemento; foi movido para
+autorização de publicação do complemento; foi movido para
 **Code Review**. O checklist de aceitação permanece desmarcado para o aceite
 humano e o card continua aberto. Nenhum comentário ou mensagem foi enviado a
 outros integrantes.
@@ -159,7 +160,7 @@ Capturas com contas fictícias:
 - [Excesso de tentativas em celular](evidencias/us-002/limite-mobile.png).
 - [Indisponibilidade em desktop](evidencias/us-002/indisponibilidade-desktop.png).
 
-## Verificações automatizadas
+## Histórico das verificações automatizadas
 
 Os resultados abaixo da primeira execução foram reconfirmados em 2026-10-24
 para lint, tipos, build e 7 unitários. As 34 integrações reais constam da entrega
@@ -167,7 +168,8 @@ da US-006 e o [CI do head do PR #8](https://github.com/Rebecamarini/FixIt/action
 foi consultado: job CI aprovado, incluindo a etapa de lint, tipos, build,
 unitários e todas as integrações em stack descartável; promoção de migrations
 ignorada no evento de PR. A suíte destrutiva não foi repetida na stack local
-compartilhada nesta retomada.
+compartilhada em 2026-10-24. A execução posterior está registrada na
+[reconferência de 2026-10-25](#reconferência-de-2026-10-25).
 
 - `npm run lint`: aprovado, sem avisos.
 - `npm run typecheck`: aprovado; também executado durante os ciclos de integração.
@@ -223,9 +225,9 @@ forçada somente no cookie de teste. Ambos exigem login sem apresentar o título
 protegido; um login real subsequente retorna à inicial. Não houve simulação de
 respostas do Auth nem alteração do relógio do servidor nessa prova.
 
-Resultado: seis combinações de papel/largura e dois cenários de sessão
-aprovados, nenhum erro JavaScript e contagens preservadas em **42 solicitações
-e 42 eventos**. Reprodução e capturas estão no
+Os resultados da execução mais recente estão na
+[reconferência de 2026-10-25](#reconferência-de-2026-10-25).
+Reprodução e capturas estão no
 [relatório da US-006](validacao-us-006.md#reprodução). O script temporário da
 primeira validação, `/tmp/fixit-us002-browser.mjs`, também foi repetido para os
 três papéis nas duas larguras: credenciais inválidas, persistência de sessão,
