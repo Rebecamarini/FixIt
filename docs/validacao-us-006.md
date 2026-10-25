@@ -116,7 +116,8 @@ contra a base acima; duas revisões independentes examinaram padrões e spec.
 A página fornece a evidência local integrada da proteção exigida no CA-03 da
 US-002: acesso autenticado, logout, histórico, URL direta e sessão inválida ou não
 renovável. Isso complementa o [relatório histórico da US-002](validacao-us-002.md),
-que ainda não dispunha de página real de solicitações. Revisão humana e aceite no
+que inicialmente não dispunha de página real de solicitações e agora registra
+a comprovação integrada do CA-03. Revisão humana e aceite no
 ambiente de testes permanecem etapas externas; nenhum card foi concluído.
 
 Referências técnicas verificadas: guias instalados do Next.js 16.4.2 de páginas,
