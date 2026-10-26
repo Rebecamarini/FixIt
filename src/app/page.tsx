@@ -10,11 +10,13 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const connection = await checkConnection();
   let nome: string | null = null;
+  let gestor = false;
   let sessionError = false;
   try {
     const client = await createSessionClient();
     const identidade = await obterIdentidade(client);
     if (identidade) {
+      gestor = identidade.papel === "Gestor";
       const profile = await client.from("perfis").select("nome").eq("id", identidade.id).single();
       if (profile.error) throw profile.error;
       nome = profile.data.nome;
@@ -30,6 +32,7 @@ export default async function Home() {
         <p>Você entrou no FixIt.</p>
         <p><Link href="/solicitacoes/nova">Nova solicitação</Link></p>
         <p><Link href="/conta/perfil">Meu perfil</Link></p>
+        {gestor && <p><Link href="/usuarios">Gerenciar usuários</Link></p>}
         <LogoutForm />
       </section> : <nav aria-label="Acesso"><Link href="/conta/entrar">Entrar</Link>{" · "}<Link href="/conta/cadastrar">Criar conta</Link></nav>}
       <section className={styles.connection} aria-labelledby="connection-title">

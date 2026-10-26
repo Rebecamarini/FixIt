@@ -6,9 +6,8 @@ import type { AccountState } from "../../server/account.ts";
 import { cadastrar, entrar, sair } from "./actions";
 import styles from "./form.module.css";
 
-export function AccountForm({ cadastro = false, setores = [] }: {
+export function AccountForm({ cadastro = false }: {
   cadastro?: boolean;
-  setores?: { id: string; nome: string }[];
 }) {
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -38,21 +37,6 @@ export function AccountForm({ cadastro = false, setores = [] }: {
         {fieldError("senha")}
         <label className={styles.checkbox}><input type="checkbox" checked={mostrarSenha} onChange={event => setMostrarSenha(event.target.checked)} /> Mostrar senha</label>
       </div>
-      {cadastro && <>
-        <div>
-          <label htmlFor="matricula">Matrícula</label>
-          <input id="matricula" name="matricula" type="text" required defaultValue={state.values?.matricula ?? ""} {...invalid("matricula")} />
-          {fieldError("matricula")}
-        </div>
-        <div>
-          <label htmlFor="setor_id">Setor</label>
-          <select key={state.values?.setor_id ?? ""} id="setor_id" name="setor_id" required defaultValue={state.values?.setor_id ?? ""} {...invalid("setor_id")}>
-            <option value="">Selecione seu setor</option>
-            {setores.map(setor => <option key={setor.id} value={setor.id}>{setor.nome}</option>)}
-          </select>
-          {fieldError("setor_id")}
-        </div>
-      </>}
       <button type="submit" disabled={pending}>{pending ? "Aguarde…" : cadastro ? "Criar conta" : "Entrar"}</button>
       <p>{cadastro ? <>Já tem conta? <Link href="/conta/entrar">Entrar</Link></> : <>Ainda não tem conta? <Link href="/conta/cadastrar">Criar conta</Link></>}</p>
     </form>

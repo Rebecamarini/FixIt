@@ -64,14 +64,15 @@ npx --no-install supabase config push --project-ref gifqssocvuieagmndxwy --workd
 Nenhuma migration de negócio ou seed remoto foi aplicado por BT-002. A promoção depende de integração em `main`, CI aprovado do mesmo commit e CD; não execute reset remoto. O CD não publica Next.js.
 
 
-## Capacidade restrita da US-003
+## Capacidades administrativas restritas
 
-O [ADR 0004](adr/0004-troca-email-auth-administrativa.md) autoriza
-`SUPABASE_SECRET_KEY` exclusivamente no servidor Next.js para trocar o e-mail
-da própria conta, após validar sessão e senha atual. Isso não altera a chave
-pública das operações comuns. Configure a chave do ambiente correspondente
-somente em `.env.local`/segredo do servidor, sem prefixo `NEXT_PUBLIC_` e sem Git.
-A CI gera a chave local descartável sem imprimi-la. A configuração cloud acima
-não basta para ativar essa capacidade na aplicação; a promoção da migration e
-a configuração do segredo de runtime continuam pelo fluxo de integração/deploy.
-Nenhuma configuração ou migration remota foi alterada durante a US-003.
+O [ADR 0004](adr/0004-troca-email-auth-administrativa.md) autoriza a troca do
+próprio e-mail após validar sessão e senha atual. A [US-004](https://trello.com/c/waxQ1rjj)
+autoriza uma capacidade separada de consulta, criação e exclusão de contas por
+Gestor ativo. Ambas usam `SUPABASE_SECRET_KEY` exclusivamente no servidor Next.js.
+A chave pública continua obrigatória para
+operações comuns. Configure a chave do ambiente correspondente somente em
+`.env.local`/segredo do servidor, sem prefixo `NEXT_PUBLIC_` e sem Git. A CI gera
+a chave local descartável sem imprimi-la. O segredo de runtime e as migrations
+precisam ser instalados separadamente no ambiente de destino; esta capacidade
+não altera configurações remotas por si só.

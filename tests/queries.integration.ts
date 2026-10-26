@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createRequestClient } from "../src/server/identity.ts";
 import { criarSolicitacao, listarSolicitacoes, obterSolicitacao, obterHistoricoSolicitacao } from "../src/server/requests.ts";
-import { localAdmin, cookieJar, uniqueSignup } from "./support/identity.ts";
+import { localAdmin, cookieJar, uniqueSignup, createRoleUser } from "./support/identity.ts";
 
 const valid = { local: "Sala 12", categoria_id: "20000000-0000-4000-8000-000000000001", assunto: "Consulta", descricao: "Lâmpada apagada." };
 
@@ -97,10 +97,15 @@ test("detalhe e histórico preservam isolamento, mesma ausência e cronologia co
     }
     assert.ok((await owner.from("historico_solicitacoes").insert({ solicitacao_id: id, autor_id: a.data.user.id, descricao: "Forjado", estado_novo: "Pendente" })).error);
     for (const papel of ["Gestor", "Manutentor"]) {
-      assert.equal((await admin.from("perfis").update({ papel }).eq("id", b.data.user.id)).error, null);
-      assert.deepEqual(await listarSolicitacoes(other), { data: null, erro: "nao_autorizado" });
-      assert.deepEqual(await obterSolicitacao(other, id), { data: null, erro: "nao_autorizado" });
-      assert.deepEqual(await obterHistoricoSolicitacao(other, id), { data: null, erro: "nao_autorizado" });
+      const signup = uniqueSignup();
+      const created = await createRoleUser(admin, signup, papel);
+      const privileged = createRequestClient(cookieJar());
+      assert.equal((await privileged.auth.signInWithPassword({ email: signup.email, password: signup.password })).error, null);
+      try {
+      assert.deepEqual(await listarSolicitacoes(privileged), { data: null, erro: "nao_autorizado" });
+      assert.deepEqual(await obterSolicitacao(privileged, id), { data: null, erro: "nao_autorizado" });
+      assert.deepEqual(await obterHistoricoSolicitacao(privileged, id), { data: null, erro: "nao_autorizado" });
+      } finally { await privileged.auth.signOut({ scope: "local" }); await admin.auth.admin.deleteUser(created.data.user!.id); }
     }
   } finally {
     for (const user of [a.data.user, b.data.user]) {

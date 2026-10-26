@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { consultarPerfil, salvarPerfil } from "../src/server/profile.ts";
 import { createRequestClient } from "../src/server/identity.ts";
-import { localAdmin, cookieJar, uniqueSignup } from "./support/identity.ts";
+import { localAdmin, cookieJar, uniqueSignup, createRoleUser } from "./support/identity.ts";
 
 function form(values: Record<string, string>) {
   const data = new FormData();
@@ -14,32 +14,29 @@ async function fixture(papel = "Cliente") {
   const admin = localAdmin();
   if (!process.env.SUPABASE_SECRET_KEY) throw new Error("Configure a chave local restrita para testar alteração de e-mail (ADR 0004).");
   const signup = uniqueSignup();
-  const created = await admin.auth.admin.createUser({ email: signup.email, password: signup.password, email_confirm: true, user_metadata: signup.options.data });
+  const created = await createRoleUser(admin, signup, papel);
   assert.equal(created.error, null);
   const id = created.data.user!.id;
-  assert.equal((await admin.from("perfis").update({ papel }).eq("id", id)).error, null);
   const jar = cookieJar();
   const client = createRequestClient(jar);
   assert.equal((await client.auth.signInWithPassword({ email: signup.email, password: signup.password })).error, null);
   return { admin, signup, id, jar, client, cleanup: () => admin.auth.admin.deleteUser(id) };
 }
 
-test("perfil próprio: três papéis consultam, normalizam e persistem os três campos atomicamente", async () => {
+test("perfil próprio: os três papéis editam somente o nome", async () => {
   for (const papel of ["Cliente", "Manutentor", "Gestor"]) {
     const f = await fixture(papel);
     try {
       const original = await consultarPerfil(f.client);
       assert.equal(original?.papel, papel);
       assert.equal(original?.email, f.signup.email);
-      const values = { nome: " \ufeff Pessoa editada \u00a0", matricula: `  00Ab-${f.id}  `, setor_id: "10000000-0000-4000-8000-000000000002" };
+      const values = { nome: " \ufeff Pessoa editada \u00a0" };
       const result = await salvarPerfil(f.client, form(values));
       assert.equal(result.success, true);
       const persisted = await consultarPerfil(createRequestClient(f.jar));
       assert.equal(persisted?.nome, "Pessoa editada");
-      assert.equal(persisted?.matricula, `00Ab-${f.id}`);
-      assert.equal(persisted?.setor_id, values.setor_id);
-      assert.equal((await salvarPerfil(f.client, form({ ...values, matricula: persisted!.matricula }))).success, true);
-      assert.ok(!(await salvarPerfil(f.client, form({ ...values, nome: "Não salvar", setor_id: "99999999-9999-4999-8999-999999999999" }))).success);
+      assert.equal((await salvarPerfil(f.client, form(values))).success, true);
+      assert.ok(!(await salvarPerfil(f.client, form({ ...values, nome: "Não salvar", papel: "Gestor" }))).success);
       assert.deepEqual(await consultarPerfil(createRequestClient(f.jar)), persisted);
       assert.equal((await salvarPerfil(f.client, form({ ...values, nome: "Último salvamento" }))).success, true);
       assert.equal((await consultarPerfil(createRequestClient(f.jar)))?.nome, "Último salvamento");
@@ -47,14 +44,13 @@ test("perfil próprio: três papéis consultam, normalizam e persistem os três 
   }
 });
 
-test("perfil: concorrência por matrícula, isolamento, validação e proteção de ID/papel", async () => {
+test("perfil: edições independentes, isolamento, validação e proteção de ID/papel", async () => {
   const a = await fixture("Gestor");
   const b = await fixture();
   try {
-    const values = { nome: "Pessoa", matricula: `00Conc-${a.id}`, setor_id: a.signup.options.data.setor_id };
-    const results = await Promise.all([salvarPerfil(a.client, form(values)), salvarPerfil(b.client, form({ ...values, matricula: values.matricula.toLowerCase() }))]);
-    assert.equal(results.filter(r => r.success).length, 1);
-    assert.equal(results.filter(r => r.errors?.matricula).length, 1);
+    const values = { nome: "Pessoa" };
+    const results = await Promise.all([salvarPerfil(a.client, form(values)), salvarPerfil(b.client, form(values))]);
+    assert.equal(results.filter(r => r.success).length, 2);
     const before = await consultarPerfil(a.client);
     assert.ok((await salvarPerfil(a.client, form({ ...values, nome: " \ufeff " }))).errors?.nome);
     for (const [key, value] of [["id", b.id], ["papel", "Cliente"], ["user_id", b.id]]) {
@@ -181,7 +177,7 @@ test("falhas de rede e limite de tentativas recebem orientação sem dados secre
     return originalFetch(input, init);
   });
   try {
-    const uncertain = await salvarPerfil(f.client, form({ nome: "Nome", matricula: `00-${f.id}`, setor_id: f.signup.options.data.setor_id }));
+    const uncertain = await salvarPerfil(f.client, form({ nome: "Nome" }));
     assert.match(uncertain.message!, /confirmar a gravação/);
     const limited = await alterarSenha(f.client, form({ senha_atual: f.signup.password, nova_senha: "Outra-local-123!", confirmar_senha: "Outra-local-123!" }));
     assert.match(limited.message!, /Muitas tentativas/);

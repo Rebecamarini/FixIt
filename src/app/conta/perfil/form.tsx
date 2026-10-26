@@ -6,9 +6,9 @@ import { CredentialModal } from "./modal";
 import { salvar } from "./actions";
 import styles from "../form.module.css";
 
-export function ProfileForm({ perfil, setores }: { perfil: Perfil; setores: { id: string; nome: string }[] }) {
+export function ProfileForm({ perfil }: { perfil: Perfil }) {
   const router = useRouter();
-  const [values, setValues] = useState({ nome: perfil.nome, matricula: perfil.matricula, setor_id: perfil.setor_id });
+  const [values, setValues] = useState({ nome: perfil.nome });
   const [email, setEmail] = useState(perfil.email);
   const [modal, setModal] = useState<"email" | "senha" | null>(null);
   const [saved, setSaved] = useState(values);
@@ -27,9 +27,7 @@ export function ProfileForm({ perfil, setores }: { perfil: Perfil; setores: { id
   }
   function field(name: keyof typeof values, label: string) {
     const error = state.errors?.[name];
-    return <div><label htmlFor={name}>{label}</label>{name === "setor_id" ? <select id={name} name={name} value={values[name]} onChange={e => setValues({ ...values, [name]: e.target.value })} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined}>
-      {setores.map(setor => <option key={setor.id} value={setor.id}>{setor.nome}</option>)}
-    </select> : <input id={name} name={name} type="text" value={values[name]} onChange={e => setValues({ ...values, [name]: e.target.value })} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />}
+    return <div><label htmlFor={name}>{label}</label><input id={name} name={name} type="text" value={values[name]} onChange={e => setValues({ ...values, [name]: e.target.value })} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} />
     {error && <span className={styles.error} id={`${name}-error`}>{error}</span>}</div>;
   }
   return <>
@@ -46,14 +44,14 @@ export function ProfileForm({ perfil, setores }: { perfil: Perfil; setores: { id
         if (sessionLost(result)) return;
         setState(result);
         if (result.perfil) {
-          const next = { nome: result.perfil.nome, matricula: result.perfil.matricula, setor_id: result.perfil.setor_id };
+          const next = { nome: result.perfil.nome };
           setValues(next); setSaved(next);
         }
       } catch { setState({ message: "Não foi possível confirmar a gravação. Confira os dados atuais antes de repetir." }); }
       finally { setBusy(false); }
     }} aria-busy={busy}>
       <fieldset disabled={busy} className={styles.form} style={{ border: 0, padding: 0, margin: 0 }}>
-        {field("nome", "Nome")}{field("matricula", "Matrícula")}{field("setor_id", "Setor")}
+        {field("nome", "Nome")}
         <button type="submit">{busy ? "Salvando…" : "Salvar perfil"}</button>
         <button type="button" onClick={() => { if (!dirty || window.confirm("Descartar alterações do perfil? Cancele para continuar editando.")) router.push("/"); }}>Voltar</button>
       </fieldset>

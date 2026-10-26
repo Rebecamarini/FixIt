@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "./config.ts";
 import { createRequestClient, type Papel } from "./identity.ts";
 
-export type Perfil = { id: string; nome: string; matricula: string; setor_id: string; papel: Papel; email: string };
+export type Perfil = { id: string; nome: string; papel: Papel; email: string };
 export type ProfileState = {
   success?: boolean;
   message?: string;
@@ -25,7 +25,7 @@ export async function consultarPerfil(client: SupabaseClient): Promise<Perfil | 
     throw new Error(unavailable);
   }
   if (!user) return null;
-  const result = await client.from("perfis").select("id,nome,matricula,setor_id,papel").eq("id", user.id).maybeSingle();
+  const result = await client.from("perfis").select("id,nome,papel").eq("id", user.id).maybeSingle();
   if (result.error) throw new Error(unavailable);
   if (!result.data) return null;
   return { ...result.data, email: user.email ?? "" };
@@ -40,17 +40,11 @@ export async function salvarPerfil(client: SupabaseClient, form: FormData): Prom
   try {
     const perfil = await consultarPerfil(client);
     if (!perfil) return lost;
-    if (manipulated(form, ["nome", "matricula", "setor_id"])) return { message: "Envie somente nome, matrícula e setor do seu perfil." };
-    const values = { nome: text(form, "nome"), matricula: text(form, "matricula"), setor_id: text(form, "setor_id") };
-    const errors: Record<string, string> = {};
-    if (!values.nome) errors.nome = "Informe seu nome.";
-    if (!values.matricula) errors.matricula = "Informe sua matrícula.";
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(values.setor_id)) errors.setor_id = "Selecione um setor válido.";
-    if (Object.keys(errors).length) return { errors, message: "Confira os campos indicados." };
+    if (manipulated(form, ["nome"])) return { message: "Envie somente o nome do seu perfil." };
+    const values = { nome: text(form, "nome") };
+    if (!values.nome) return { errors: { nome: "Informe seu nome." }, message: "Confira os campos indicados." };
     writing = true;
-    const result = await client.from("perfis").update(values).eq("id", perfil.id).select("id,nome,matricula,setor_id,papel").maybeSingle();
-    if (result.error?.code === "23505") return { errors: { matricula: "Esta matrícula já está em uso. Informe outra." }, message: "Confira a matrícula." };
-    if (result.error?.code === "23503") return { errors: { setor_id: "Selecione um setor cadastrado." }, message: "Confira o setor." };
+    const result = await client.from("perfis").update(values).eq("id", perfil.id).select("id,nome,papel").maybeSingle();
     if (result.error) return { message: result.error.code === "42501" ? "Não foi possível salvar seu perfil. Recarregue a página e tente novamente." : uncertain };
     if (!result.data) return lost;
     return { success: true, perfil: { ...result.data, email: perfil.email }, message: "Perfil salvo." };

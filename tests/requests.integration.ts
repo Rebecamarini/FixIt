@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { execFileSync } from "node:child_process";
 import { createRequestClient } from "../src/server/identity.ts";
 import { criarSolicitacao } from "../src/server/requests.ts";
-import { localAdmin, cookieJar, uniqueSignup } from "./support/identity.ts";
+import { localAdmin, cookieJar, uniqueSignup, createRoleUser } from "./support/identity.ts";
 
 const valid = { local: " Sala 12 ", categoria_id: "20000000-0000-4000-8000-000000000001", assunto: "Lâmpada apagada", descricao: "A lâmpada não acende.", riscos: "\t\n " };
 
@@ -133,11 +133,16 @@ test("solicitação e histórico ficam privados e papéis privilegiados não rec
     assert.deepEqual((await other.from("historico_solicitacoes").select("*").eq("solicitacao_id", id)).data, []);
     assert.ok((await other.from("solicitacoes").insert({ ...valid, autor_id: a.data.user.id })).error);
     for (const papel of ["Gestor", "Manutentor"]) {
-      assert.equal((await admin.from("perfis").update({ papel }).eq("id", b.data.user.id)).error, null);
-      assert.equal((await criarSolicitacao(other, valid)).erro, "nao_autorizado");
-      assert.ok((await other.from("solicitacoes").insert(valid)).error);
-      assert.deepEqual((await other.from("solicitacoes").select("*")).data, []);
-      assert.deepEqual((await other.from("historico_solicitacoes").select("*")).data, []);
+      const signup = uniqueSignup();
+      const created = await createRoleUser(admin, signup, papel);
+      const privileged = createRequestClient(cookieJar());
+      assert.equal((await privileged.auth.signInWithPassword({ email: signup.email, password: signup.password })).error, null);
+      try {
+      assert.equal((await criarSolicitacao(privileged, valid)).erro, "nao_autorizado");
+      assert.ok((await privileged.from("solicitacoes").insert(valid)).error);
+      assert.deepEqual((await privileged.from("solicitacoes").select("*")).data, []);
+      assert.deepEqual((await privileged.from("historico_solicitacoes").select("*")).data, []);
+      } finally { await privileged.auth.signOut({ scope: "local" }); await admin.auth.admin.deleteUser(created.data.user!.id); }
     }
   } finally {
     if (id) await admin.from("solicitacoes").delete().eq("id", id);
