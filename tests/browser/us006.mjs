@@ -9,7 +9,7 @@ assert.equal(new URL(url).hostname, '127.0.0.1', 'Run against the local applicat
 const admin = localAdmin();
 const browser = await chromium.launch();
 const errors = [];
-const evidence = 'docs/evidencias/us-006';
+const evidence = process.env.FIXIT_BROWSER_EVIDENCE || 'docs/evidencias/us-006';
 mkdirSync(evidence, { recursive: true });
 async function counts() {
   const result = {};
@@ -32,7 +32,8 @@ async function login(page, email) {
 async function protectedPage(page) {
   await page.getByRole('heading', { name: 'Nova solicitação de manutenção', exact: true }).waitFor();
   await page.getByRole('link', { name: 'Cancelar', exact: true }).waitFor();
-  assert.equal(await page.locator('main form, main input, main select, main textarea, main button').count(), 0);
+  await page.locator('#local').waitFor();
+  assert.equal(await page.locator('#categoria_id').inputValue(), '');
   assert.ok((await page.locator('main p').allTextContents()).some(text => /manutenção/i.test(text)));
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 }
