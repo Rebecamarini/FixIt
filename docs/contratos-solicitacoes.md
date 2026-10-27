@@ -91,9 +91,10 @@ Dados reproduzíveis para consulta e paginação pertencem à BT-005.
 
 ## Consulta própria — BT-005
 
-[BT-005](https://trello.com/c/m7H2NRnJ) prepara os contratos para Rebeca em
-[S1-R01](https://trello.com/c/OaAB6z5B), sem entregar as telas de US-005/010/011.
-As funções abaixo são exportadas pelo mesmo `src/server/requests.ts`, recebem
+[BT-005](https://trello.com/c/m7H2NRnJ) preparou os contratos para Rebeca em
+[S1-R01](https://trello.com/c/OaAB6z5B). A tela da US-010 consome essa base; as
+telas de US-005/011 permanecem fora desta entrega. As funções abaixo são
+exportadas pelo mesmo `src/server/requests.ts`, recebem
 `createSessionClient()` no servidor e usam a identidade real da requisição.
 Nenhuma consulta usa chave administrativa. Gestor/Manutentor não recebem
 visibilidade administrativa nesta base.
@@ -102,16 +103,17 @@ visibilidade administrativa nesta base.
 em **1**, com **20** itens fixos. Strings, null, frações, zero e negativos são
 inválidos; limite de página `107374182` mantém o intervalo dentro do inteiro da
 API. Ordenação: `criado_em DESC, id DESC` (UUID desempata instantes iguais).
-Cada `ResumoSolicitacao` contém apenas `id`, `assunto`, `categoria_id`,
-`criado_em` e `estado`, com os mesmos tipos não nulos da solicitação. A categoria
-pode ser resolvida nas referências compartilhadas, sem copiar o nome para a
-solicitação. `total` conta somente o conjunto autorizado; não inclui outro Cliente.
+Cada `ResumoSolicitacao` contém `id`, `assunto`, `categoria_id`, `criado_em`,
+`estado` e `categoria: { nome }`, com tipos não nulos. O relacionamento resolve o
+nome na referência compartilhada, sem copiá-lo para a solicitação. `total` conta
+somente o conjunto autorizado; não inclui outro Cliente.
 
 ```ts
 const client = await createSessionClient();
 await listarSolicitacoes(client, 1);
 // { data: { itens: [{ id: UUID, assunto: "Lâmpada apagada",
-//   categoria_id: UUID, criado_em: ISO, estado: "Pendente" }, ...],
+//   categoria_id: UUID, categoria: { nome: "Elétrica (fictícia)" },
+//   criado_em: ISO, estado: "Pendente" }, ...],
 //   pagina: 1, tamanho_pagina: 20, total: 21 }, erro: null }
 await listarSolicitacoes(client, 2);
 // { data: { itens: [/* último resumo */], pagina: 2,

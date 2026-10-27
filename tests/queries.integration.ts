@@ -28,7 +28,14 @@ test("consulta paginada retorna somente resumos próprios, vinte por página, ma
     assert.equal(first.erro, null); assert.ok(first.data);
     assert.equal(first.data.total, 21); assert.equal(first.data.itens.length, 20);
     assert.deepEqual(first.data.itens.map(row => row.id), ids.toReversed().slice(0, 20));
-    assert.deepEqual(first.data.itens[0], { id: ids[20], assunto: "Consulta 21", categoria_id: valid.categoria_id, criado_em: newestDate, estado: "Pendente" });
+    assert.deepEqual(first.data.itens[0], {
+      id: ids[20],
+      assunto: "Consulta 21",
+      categoria_id: valid.categoria_id,
+      categoria: { nome: "Elétrica (fictícia)" },
+      criado_em: newestDate,
+      estado: "Pendente",
+    });
     const second = await listarSolicitacoes(owner, 2);
     assert.deepEqual(second.data?.itens.map(row => row.id), [ids[0]]);
     assert.deepEqual((await listarSolicitacoes(owner, 3)).data, { itens: [], pagina: 3, tamanho_pagina: 20, total: 21 });

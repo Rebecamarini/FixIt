@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { obterIdentidade } from "./identity.ts";
+import { PAGINA_MAXIMA_SOLICITACOES, TAMANHO_PAGINA_SOLICITACOES } from "./request-pagination.ts";
 
 export type Solicitacao = {
   id: string; autor_id: string; categoria_id: string;
@@ -36,26 +37,37 @@ export async function criarSolicitacao(client: SupabaseClient, input: unknown): 
 }
 
 export type ResultadoConsulta<T> = { data: T | null; erro: null | "nao_autenticado" | "nao_autorizado" | "dados_invalidos" | "nao_encontrado" | "falha_consulta" };
-export type ResumoSolicitacao = Pick<Solicitacao, "id" | "assunto" | "categoria_id" | "criado_em" | "estado">;
-export type PaginaSolicitacoes = { itens: ResumoSolicitacao[]; pagina: number; tamanho_pagina: 20; total: number };
+export type ResumoSolicitacao = Pick<Solicitacao, "id" | "assunto" | "categoria_id" | "criado_em" | "estado"> & {
+  categoria: { nome: string };
+};
+export type PaginaSolicitacoes = { itens: ResumoSolicitacao[]; pagina: number; tamanho_pagina: typeof TAMANHO_PAGINA_SOLICITACOES; total: number };
 
 export async function listarSolicitacoes(client: SupabaseClient, pagina: unknown = 1): Promise<ResultadoConsulta<PaginaSolicitacoes>> {
   const identidade = await obterIdentidade(client);
   if (!identidade) return { data: null, erro: "nao_autenticado" };
   if (identidade.papel !== "Cliente") return { data: null, erro: "nao_autorizado" };
-  if (typeof pagina !== "number" || !Number.isSafeInteger(pagina) || pagina < 1 || pagina > Math.floor(2147483647 / 20)) return { data: null, erro: "dados_invalidos" };
-  const offset = (pagina - 1) * 20;
+  if (typeof pagina !== "number" || !Number.isSafeInteger(pagina) || pagina < 1 || pagina > PAGINA_MAXIMA_SOLICITACOES) return { data: null, erro: "dados_invalidos" };
+  const offset = (pagina - 1) * TAMANHO_PAGINA_SOLICITACOES;
   const { data, error, count } = await client.from("solicitacoes")
-    .select("id,assunto,categoria_id,criado_em,estado", { count: "exact" })
+    .select("id,assunto,categoria_id,criado_em,estado,categoria:categorias!inner(nome)", { count: "exact" })
     .eq("autor_id", identidade.id).order("criado_em", { ascending: false }).order("id", { ascending: false })
-    .range(offset, offset + 19);
+    .range(offset, offset + TAMANHO_PAGINA_SOLICITACOES - 1);
   if (error?.code === "PGRST103") {
     const total = await client.from("solicitacoes").select("id", { count: "exact", head: true }).eq("autor_id", identidade.id);
     if (total.error) return { data: null, erro: "falha_consulta" };
-    return { data: { itens: [], pagina, tamanho_pagina: 20, total: total.count ?? 0 }, erro: null };
+    return { data: { itens: [], pagina, tamanho_pagina: TAMANHO_PAGINA_SOLICITACOES, total: total.count ?? 0 }, erro: null };
   }
   if (error) return { data: null, erro: "falha_consulta" };
-  return { data: { itens: data, pagina, tamanho_pagina: 20, total: count ?? 0 }, erro: null };
+  const itens: ResumoSolicitacao[] = [];
+  for (const row of data) {
+    const relacionamento: unknown = row.categoria;
+    const categoria = Array.isArray(relacionamento) ? relacionamento[0] : relacionamento;
+    if (!categoria || typeof categoria !== "object" || !("nome" in categoria) || typeof categoria.nome !== "string") {
+      return { data: null, erro: "falha_consulta" };
+    }
+    itens.push({ ...row, categoria: { nome: categoria.nome } });
+  }
+  return { data: { itens, pagina, tamanho_pagina: TAMANHO_PAGINA_SOLICITACOES, total: count ?? 0 }, erro: null };
 }
 
 export type EventoSolicitacao = {
