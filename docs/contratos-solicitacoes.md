@@ -180,3 +180,29 @@ lint, tipos, build, 5 verificações de configuração e 13 integrações reais.
 repetição da carga comparando contas, solicitações e eventos antes/depois,
 incluindo uma solicitação adicional preservada. O banco local permanece com
 os 42 exemplos e seus eventos; testes removem apenas seus registros temporários.
+
+## US-011 — detalhe e histórico na Sprint 1
+
+[US-011](https://trello.com/c/e8nuHOYQ) é consultada em `/solicitacoes/[id]`,
+destino dos links da US-010. `obterDetalheSolicitacao` reutiliza as operações
+protegidas acima e resolve categoria e nomes de autores com a sessão atual.
+Um perfil não visível pela RLS permanece identificado pelo UUID do autor;
+nenhuma permissão de perfil é ampliada. Eventos preservam a ordem do contrato.
+UUID inválido, inexistente, alheio ou papel sem acesso recebem a mesma tela
+de não encontrado; sessão ausente recebe mensagem de sessão necessária.
+Falhas de consulta recebem mensagem genérica e opção de tentar novamente.
+
+Recorte confirmado: dados persistidos, status Pendente e histórico inicial
+somente leitura. Anexos, responsáveis e observações mostram indisponibilidade;
+não são apresentados como registros vazios de um modelo que ainda não existe.
+O aceite integral do CA-01 continua dependendo das entregas abaixo:
+
+- Anexos (US-008): Blocked by: https://trello.com/c/cPY9qngn
+- Responsáveis (US-018): Blocked by: https://trello.com/c/IfOPe47w
+- Observações (US-021): Blocked by: https://trello.com/c/dXJc6X4T
+
+`tests/request-details.test.ts` renderiza a interface real com React DOM e
+verifica os dados, a autoria, a ordem recebida, escape de conteúdo e ausência
+de controles de escrita. `tests/queries.integration.ts` valida a consulta
+agregada com sessão real, isolamento, categoria, autoria e cronologia no banco
+local. Essas verificações não substituem a validação ponta a ponta da rota.

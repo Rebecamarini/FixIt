@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { createRequestClient } from "../src/server/identity.ts";
 import { criarSolicitacao, listarSolicitacoes, obterSolicitacao, obterHistoricoSolicitacao } from "../src/server/requests.ts";
 import { localAdmin, cookieJar, uniqueSignup } from "./support/identity.ts";
+import { obterDetalheSolicitacao } from "../src/server/request-details.ts";
 
 const valid = { local: "Sala 12", categoria_id: "20000000-0000-4000-8000-000000000001", assunto: "Consulta", descricao: "Lâmpada apagada." };
 
@@ -77,6 +78,11 @@ test("detalhe e histórico preservam isolamento, mesma ausência e cronologia co
     assert.equal(initial.data[0].descricao, "Solicitação criada.");
     assert.equal(initial.data[0].estado_anterior, null);
     assert.equal(initial.data[0].criado_em, created.data.criado_em);
+    const detalhe = await obterDetalheSolicitacao(owner, id);
+    assert.equal(detalhe.erro, null);
+    assert.equal(detalhe.data?.categoria, "Elétrica (fictícia)");
+    assert.equal(detalhe.data?.historico[0].autor, "Cliente fictício");
+    assert.deepEqual(detalhe.data?.solicitacao, created.data);
     // Dados locais sintéticos verificam a leitura cronológica sem liberar escrita ao Cliente.
     const ids = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
     assert.equal((await admin.from("historico_solicitacoes").update({ criado_em: "2000-01-01T00:00:00Z" }).eq("solicitacao_id", id)).error, null);
@@ -86,8 +92,9 @@ test("detalhe e histórico preservam isolamento, mesma ausência e cronologia co
       { id: ids[0], criado_em: "2001-01-01T00:00:00Z" },
     ].map(row => ({ ...row, solicitacao_id: id, autor_id: a.data.user!.id, descricao: "Exemplo cronológico local", estado_anterior: "Pendente", estado_novo: "Pendente" })))).error, null);
     assert.deepEqual((await obterHistoricoSolicitacao(owner, id)).data?.map(row => row.id), [initial.data[0].id, ...ids]);
+    assert.deepEqual((await obterDetalheSolicitacao(owner, id)).data?.historico.map(row => row.id), [initial.data[0].id, ...ids]);
     const missing = "99999999-9999-4999-8999-999999999999";
-    for (const query of [obterSolicitacao, obterHistoricoSolicitacao]) {
+    for (const query of [obterSolicitacao, obterHistoricoSolicitacao, obterDetalheSolicitacao]) {
       assert.deepEqual(await query(other, id), { data: null, erro: "nao_encontrado" });
       assert.deepEqual(await query(other, missing), { data: null, erro: "nao_encontrado" });
       assert.deepEqual(await query(anon, id), { data: null, erro: "nao_autenticado" });
@@ -108,6 +115,7 @@ test("detalhe e histórico preservam isolamento, mesma ausência e cronologia co
       assert.deepEqual(await listarSolicitacoes(other), { data: null, erro: "nao_autorizado" });
       assert.deepEqual(await obterSolicitacao(other, id), { data: null, erro: "nao_autorizado" });
       assert.deepEqual(await obterHistoricoSolicitacao(other, id), { data: null, erro: "nao_autorizado" });
+      assert.deepEqual(await obterDetalheSolicitacao(other, id), { data: null, erro: "nao_autorizado" });
     }
   } finally {
     for (const user of [a.data.user, b.data.user]) {
