@@ -82,3 +82,22 @@ O roteiro US-007 documenta o comportamento anterior de validação sem envio;
 a substituição daquela ação por envio é verificada pelo roteiro US-009.
 A migração foi aplicada somente no Supabase local. A publicação da branch e do
 PR não promove a migração nem executa deploy.
+
+## Correção do CI do PR #12
+
+O teste de concorrência dependia de pedidos antigos já existentes no banco do
+desenvolvedor. O CI recria o banco sem seed e, por isso, não encontrava legados.
+A verificação da migração agora cria um pedido e seu evento no schema anterior
+à US-009, executa o SQL real da migração e confere solicitante, todos os campos
+anteriores e o evento completo. Tudo ocorre em transação com rollback no
+container local descartável. Depois, o CI aplica a migração normalmente e roda
+a suíte sem depender de dados externos.
+
+Para repetir essa verificação isolada no ambiente local descartável:
+
+```bash
+npx --no-install supabase db reset --local --no-seed --version 20261025175916 --yes
+node tests/us009-migration.mjs
+npx --no-install supabase migration up --local
+npm run verify
+```

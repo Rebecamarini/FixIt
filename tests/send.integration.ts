@@ -115,7 +115,7 @@ test('Gestor representa qualquer papel; consultas acompanham solicitante e reenv
   }
 });
 
-test('envio concorrente à exclusão tem vencedor consistente e preserva legados', async () => {
+test('envio concorrente à exclusão tem vencedor consistente', async () => {
   const admin = localAdmin();
   const signup = uniqueSignup(); const author = await createRoleUser(admin, signup, 'Gestor');
   const authorId = author.data.user!.id;
@@ -141,14 +141,6 @@ test('envio concorrente à exclusão tem vencedor consistente e preserva legados
         assert.deepEqual((await admin.from('solicitacoes').select('id').eq('tentativa_id', attempt)).data, []);
       }
       assert.equal((await criarSolicitacao(client, valid, crypto.randomUUID(), targetId)).erro, 'solicitante_indisponivel');
-    }
-    // All rows predating this migration retained their former owner and original event.
-    const legacy = await admin.from('solicitacoes').select('id,autor_id,solicitante_id').is('tentativa_id', null);
-    assert.equal(legacy.error, null); assert.ok(legacy.data!.length > 0);
-    for (const row of legacy.data!) {
-      assert.equal(row.solicitante_id, row.autor_id);
-      const initial = await admin.from('historico_solicitacoes').select('autor_id').eq('solicitacao_id', row.id).is('estado_anterior', null);
-      assert.equal(initial.data?.length, 1); assert.equal(initial.data![0].autor_id, row.autor_id);
     }
   } finally {
     await admin.from('solicitacoes').delete().eq('autor_id', authorId);

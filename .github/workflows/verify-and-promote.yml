@@ -33,7 +33,11 @@ jobs:
             echo "Supabase startup failed; reproduce locally with npm run supabase:start."
             exit 1
           }
-          npx --no-install supabase db reset --local --no-seed --yes
+          npx --no-install supabase db reset --local --no-seed --version 20261025175916 --yes
+      - name: Verify US-009 migration preserves legacy requests and history
+        run: |
+          node tests/us009-migration.mjs
+          npx --no-install supabase migration up --local
       - name: Configure local server connection without logging keys
         run: |
           node --input-type=module <<'NODE'
