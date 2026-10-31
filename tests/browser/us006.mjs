@@ -9,7 +9,7 @@ assert.equal(new URL(url).hostname, '127.0.0.1', 'Run against the local applicat
 const admin = localAdmin();
 const browser = await chromium.launch();
 const errors = [];
-const evidence = process.env.FIXIT_BROWSER_EVIDENCE || 'docs/evidencias/us-006';
+const evidence = process.env.FIXIT_BROWSER_EVIDENCE_DIR || process.env.FIXIT_BROWSER_EVIDENCE || 'docs/evidencias/us-006';
 mkdirSync(evidence, { recursive: true });
 async function counts() {
   const result = {};
@@ -84,8 +84,14 @@ try {
       await loginRequired(page);
       await page.goto(`${url}/solicitacoes/nova`);
       await loginRequired(page);
+      await page.screenshot({ path: `${evidence}/${role.toLowerCase()}-${width}-logout-protected.png`, fullPage: true });
+      await login(page, email);
+      await page.getByText(`Olá, ${name}!`, { exact: true }).waitFor();
+      await page.screenshot({ path: `${evidence}/${role.toLowerCase()}-${width}-new-login.png`, fullPage: true });
+      await page.getByRole('button', { name: 'Sair', exact: true }).click();
+      await loginRequired(page);
       await context.close();
-      console.log(`PASS ${role} ${width}px: real login, entry, direct access, reload, cancel, logout, history, layout`);
+      console.log(`PASS ${role} ${width}px: real login, entry, direct access, reload, cancel, logout, history, new login to home, layout`);
     }
   }
   // Keep a real session, revoke its refresh token via logout, then force expiry
@@ -109,7 +115,13 @@ try {
     await context.addCookies([{ name: cookieName, value: `base64-${Buffer.from(JSON.stringify(value)).toString('base64url')}`, url }]);
     await page.goto(`${url}/solicitacoes/nova`);
     await loginRequired(page);
-    console.log(`PASS ${kind} session: login required, no protected page`);
+    await page.screenshot({ path: `${evidence}/${kind}-login-required.png`, fullPage: true });
+    await login(page, 'cliente1@fixit.example');
+    await page.getByText('Olá, Cliente Um (fictício)!', { exact: true }).waitFor();
+    await page.screenshot({ path: `${evidence}/${kind}-new-login.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Sair', exact: true }).click();
+    await loginRequired(page);
+    console.log(`PASS ${kind} session: login required, no protected page, new login to home`);
   }
   await context.close();
   const after = await counts();
