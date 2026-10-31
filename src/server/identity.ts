@@ -3,7 +3,7 @@ import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "./config.ts";
 
-type Papel = "Cliente" | "Manutentor" | "Gestor";
+export type Papel = "Cliente" | "Manutentor" | "Gestor";
 export type Identidade = { id: string; papel: Papel };
 
 // Uma instância por requisição: nunca compartilhar sessão entre usuários.
