@@ -1,16 +1,23 @@
 # Criação da solicitação — BT-004
 
-Decisão de produto posterior, ainda sem implementação: o [ADR 0003](adr/0003-solicitante-e-autor-do-envio.md) amplia a criação para os três papéis e permite ao Gestor selecionar outro solicitante, preservando sua autoria. US-007 e US-009 devem incorporar essa decisão. As regras e os campos abaixo descrevem o contrato atualmente implementado, que ainda restringe criação a Cliente e usa `autor_id` para autoria e acesso próprio.
+Atualizado pela [US-009](https://trello.com/c/OjIFOkJc), conforme ADR 0003.
+Cliente, Manutentor e Gestor enviam em nome próprio; somente Gestor representa
+outra conta ativa. Solicitante e autor do envio são vínculos distintos.
+A migração preenche o solicitante legado com o antigo autor, sem alterar eventos.
 
 [SPEC-001](https://trello.com/c/vWo76DXs) · [BT-004](https://trello.com/c/MrgSRKFE).
 Base para S1-P01; formulário, anexos e transições administrativas ficam nas histórias.
 A [identidade compartilhada](contratos-identidade.md) continua sendo a fonte da sessão.
 
-`criarSolicitacao(client, input)` em `src/server/requests.ts` recebe um cliente
+`criarSolicitacao(client, input, tentativa?, solicitante?, identidadeEsperada?)` em `src/server/requests.ts` recebe um cliente
 Supabase autenticado por requisição e um objeto desconhecido na fronteira.
 Server Actions/Route Handlers obtêm esse cliente com `createSessionClient()`;
 a operação usa `obterIdentidade(client)` e a identidade real do Auth, sem chave
-administrativa. Somente Cliente pode criar. Não existe RPC privilegiado público.
+administrativa. A identidade esperada é capturada pela Server Action em closure criptografada
+do Next.js e deve coincidir com a sessão que abriu o formulário. A tentativa é um UUID preservado na página; se omitido na operação
+de servidor, inicia um pedido distinto. Solicitante omitido significa nome próprio.
+A Server Action valida campos e modalidade e retorna somente a confirmação
+necessária à interface, ou erros sanitizados junto aos campos.
 
 | Campo de entrada | Tipo | Nulabilidade e validação |
 | --- | --- | --- |
@@ -39,13 +46,19 @@ direta pode armazenar textos opcionais sem trim.
 | --- | --- | --- |
 | `id` | uuid / string | PK, gerado pelo banco, não nulo |
 | `autor_id` | uuid / string | FK perfis, `auth.uid()`, não nulo |
+| `solicitante_id` | uuid / string | FK perfis; próprio autor ou conta ativa indicada pelo Gestor |
+| `tentativa_id` | uuid / string | Único entre tentativas; null somente nos registros legados |
 | `criado_em` | timestamptz / string ISO | `now()` do banco, não nulo |
 | `estado` | text / `"Pendente"` | Default e constraint, não nulo |
 
 Resposta: `{ data: Solicitacao, erro: null }` em sucesso; em falha,
 `{ data: null, erro }`. Códigos estáveis: `nao_autenticado` (sem sessão/perfil),
-`nao_autorizado` (papel diferente de Cliente), `dados_invalidos` (entrada ou
-constraint/FK recusada) e `falha_persistencia` (demais falhas da API). Uma falha
+`nao_autorizado` (representação proibida ou identidade divergente), `dados_invalidos` (entrada ou
+constraint/FK recusada) e `falha_persistencia` (gravação recusada pelo banco). Também retorna
+`solicitante_indisponivel`, `categoria_indisponivel` e `resultado_incerto`.
+Falha de transporte não prova rollback: a interface bloqueia edição e oferece
+“Enviar novamente”, com o mesmo UUID e conteúdo. Sucesso inclui
+`ja_registrada`, `autor_nome` e `solicitante_nome`, além de `data` e `erro`. Uma falha
 na verificação do perfil lança o erro sanitizado documentado em identidade.
 Não apresentar mensagens internas do PostgreSQL nem credenciais ao usuário.
 
@@ -78,11 +91,25 @@ nem pelo Cliente. Histórico é somente leitura e herda a visibilidade da solici
 
 O trigger privado usa `SECURITY DEFINER` com `search_path` fixo/vazio para gravar
 histórico protegido; verifica `auth.uid()` contra a autoria e não concede EXECUTE
-a PUBLIC/anon/authenticated/service_role. INSERT da solicitação é permitido
-somente nas colunas editáveis; mesmo reenviar o próprio autor ou o estado correto
-é proibido na API direta. RLS limita criação/leitura ao Cliente proprietário.
-Nenhum UPDATE/DELETE é concedido e os papéis Gestor/Manutentor não antecipam
-acesso administrativo. Tabelas expostas têm grants explícitos e RLS na migration.
+a PUBLIC/anon/authenticated/service_role. Não há INSERT direto de solicitações
+para usuários autenticados. O RPC público `us009_enviar_solicitacao` é
+SECURITY INVOKER e delega a uma função privada SECURITY DEFINER com search_path
+vazio, identidade conferida por auth.uid(), whitelist de campos e autorização
+explícita. Esse privilégio permite inserir campos protegidos e retornar a
+confirmação sem conceder novas consultas aos papéis.
+
+A função privada compartilha o advisory lock transacional 40004 com exclusão
+de contas; assim, ou a conta está ativa ao concluir o envio, ou a operação
+recusa o solicitante. O índice único de tentativa_id reforça a unicidade entre contas; UUID de outra
+identidade é recusado.
+Uma repetição retorna o registro existente antes de revalidar a atividade do
+solicitante. O autor precisa continuar ativo/autenticado. Pedidos distintos
+podem ter conteúdo igual. Não há recuperação de tentativa após recarregar.
+
+RLS e consultas do Cliente usam solicitante_id, incluindo pedidos representados.
+Histórico mantém autor_id do Gestor. Nenhum UPDATE/DELETE é concedido;
+Gestor/Manutentor não recebem leitura geral nem consultas próprias novas.
+Tabelas expostas mantêm grants explícitos e RLS.
 
 `npm run test:integration` comprova persistência por sessão real, contrato e
 ataques diretos. O teste de atomicidade instala uma constraint temporária local

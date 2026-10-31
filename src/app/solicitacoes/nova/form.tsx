@@ -3,12 +3,20 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { camposSolicitacao, preenchimentoInicial, errosPreenchimento, type Preenchimento, type ErrosPreenchimento } from '../../../lib/request-draft.ts';
-import { consultarCategorias, validarPreenchimento, buscarSolicitantes } from './actions';
+import { consultarCategorias, buscarSolicitantes } from './actions';
 import styles from './form.module.css';
+import type { EnvioSolicitacao } from '../../../server/request-submission.ts';
 import type { Papel } from '../../../server/identity.ts';
 
-export default function FormularioSolicitacao({ papel }: { papel: Papel }) {
+export default function FormularioSolicitacao({ papel, enviar }: { papel: Papel; enviar: (input: unknown, tentativa: string) => Promise<EnvioSolicitacao> }) {
   const router = useRouter();
+  const submit = useRef(enviar);
+  const attempt = useRef<string | null>(null);
+  const submitting = useRef(false);
+  const [uncertain, setUncertain] = useState(false);
+  const [confirmation, setConfirmation] = useState<NonNullable<EnvioSolicitacao['confirmation']> | null>(null);
+  const confirmationHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (confirmation) confirmationHeading.current?.focus(); }, [confirmation]);
   const dialog = useRef<HTMLDialogElement>(null);
   const cancelLink = useRef<HTMLAnchorElement>(null);
   const leaving = useRef(false);
@@ -40,7 +48,7 @@ export default function FormularioSolicitacao({ papel }: { papel: Papel }) {
       form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
     }
   }, [busy, errors]);
-  const dirty = Object.values(values).some(Boolean) || modalidade !== 'proprio' || selected !== null;
+  const dirty = !confirmation && (Object.values(values).some(Boolean) || modalidade !== 'proprio' || selected !== null);
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => {
@@ -72,20 +80,40 @@ export default function FormularioSolicitacao({ papel }: { papel: Papel }) {
     }).catch(() => { if (active) { setCategoryError('Não foi possível consultar as categorias.'); setLoading(false); } });
     return () => { active = false; };
   }, []);
+  if (confirmation) return <section aria-labelledby="confirmation-title">
+    <h2 id="confirmation-title" tabIndex={-1} ref={confirmationHeading}>Solicitação registrada</h2>
+    {confirmation.repetida && <p role="status">Esta solicitação já foi registrada.</p>}
+    <p>Identificador: {confirmation.id}</p><p>Estado: {confirmation.estado}</p>
+    {confirmation.representacao && <><p>Solicitante: {confirmation.solicitante}</p><p>Autor do envio: {confirmation.autor}</p></>}
+    <button type="button" onClick={() => {
+      setValues(preenchimentoInicial); setModalidade('proprio'); setSelected(null);
+      setQuery(''); setSearch(null); setErrors({}); setMessage(''); setAttempted(false);
+      attempt.current = null; setUncertain(false); setConfirmation(null);
+    }}>Nova solicitação</button>
+    <Link href="/">Voltar ao início</Link>
+  </section>;
   return <><form ref={form} className={styles.form} noValidate onSubmit={async event => {
-    event.preventDefault(); setAttempted(true); setBusy(true); setMessage('');
+    event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true; setAttempted(true); setBusy(true); setMessage('');
+    attempt.current ??= crypto.randomUUID();
     try {
-      const result = await validarPreenchimento({ ...values, modalidade, solicitante_id: modalidade === 'outro' ? selected?.id ?? '' : '' });
+      const result = await submit.current({ ...values, modalidade, solicitante_id: modalidade === 'outro' ? selected?.id ?? '' : '' }, attempt.current);
       setErrors(result.errors ?? {});
       if (result.errors?.solicitante_id) setSelected(null);
-      if (result.values) setValues(Object.fromEntries(camposSolicitacao.map(([key]) => [key, result.values![key] ?? ''])) as Preenchimento);
-      setMessage(result.message ?? (Object.keys(result.errors ?? {}).length ? 'Confira os campos indicados.' : 'Preenchimento válido. A solicitação ainda não foi enviada.'));
-      focusPending.current = true;
-    } catch { setMessage('Não foi possível validar. Tente novamente.'); }
-    finally { setBusy(false); }
+      if (result.confirmation) { setConfirmation(result.confirmation); setUncertain(false); }
+      else {
+        setMessage(result.message ?? 'Confira os campos indicados.');
+        setUncertain(!!result.retry);
+        if (!result.retry) attempt.current = null;
+        focusPending.current = true;
+      }
+    } catch {
+      setUncertain(true); setMessage('Não foi possível confirmar o envio. A solicitação pode estar registrada. Use Enviar novamente.');
+    } finally { submitting.current = false; setBusy(false); }
   }}>
-    <p>Validar não envia a solicitação. O autor do futuro envio será você.</p>
-    {papel === 'Gestor' ? <fieldset disabled={busy}>
+    <p>O autor do envio será você.</p>
+    {papel === 'Gestor' ? <fieldset disabled={busy || uncertain}>
       <legend>Solicitante</legend>
       <label><input type="radio" name="modalidade" checked={modalidade === 'proprio'} onChange={() => { setModalidade('proprio'); setSelected(null); setMessage(''); setErrors(current => ({ ...current, solicitante_id: undefined })); }} /> Em meu nome</label>
       <label><input type="radio" name="modalidade" checked={modalidade === 'outro'} onChange={() => { setModalidade('outro'); setMessage(''); if (attempted) setErrors(current => ({ ...current, solicitante_id: 'Selecione uma conta ativa.' })); }} /> Em nome de outra pessoa</label>
@@ -108,7 +136,7 @@ export default function FormularioSolicitacao({ papel }: { papel: Papel }) {
         </>}
       </div>}
     </fieldset> : <p>Em meu nome.</p>}
-    <fieldset disabled={busy}>
+    <fieldset disabled={busy || uncertain}>
       <legend>Informações da solicitação</legend>
       {camposSolicitacao.map(([key, label, required]) => <div key={key}>
         <label htmlFor={key}>{label} ({required ? 'obrigatório' : 'opcional'})</label>
@@ -121,8 +149,9 @@ export default function FormularioSolicitacao({ papel }: { papel: Papel }) {
         </> : <textarea id={key} rows={key === 'descricao' ? 4 : 2} value={values[key]} required={required} aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `${key}-error` : undefined} onChange={event => change(key, event.target.value)} />}
         {errors[key] && <span id={`${key}-error`} className={styles.error}>{errors[key]}</span>}
       </div>)}
-      <button type="submit">{busy ? 'Validando…' : 'Validar preenchimento'}</button>
     </fieldset>
+    <button type="submit" disabled={busy}>{busy ? 'Enviando…' : uncertain ? 'Enviar novamente' : 'Enviar solicitação'}</button>
+    {uncertain && <p>Os dados estão preservados até confirmar o resultado. Para entrar novamente, <a href="/conta/entrar" target="_blank" rel="noopener noreferrer">abra o login em outra aba</a>.</p>}
     <p role="status">{message}</p>
     <Link ref={cancelLink} href="/" onNavigate={event => {
       if (dirty) { event.preventDefault(); dialog.current?.showModal(); }
@@ -130,7 +159,7 @@ export default function FormularioSolicitacao({ papel }: { papel: Papel }) {
   </form>
   <dialog ref={dialog} className={styles.dialog} aria-labelledby="discard-title" onClose={() => cancelLink.current?.focus()}>
     <h2 id="discard-title">Descartar preenchimento?</h2>
-    <p>Os dados preenchidos serão perdidos. A solicitação ainda não foi enviada.</p>
+    <p>{uncertain || busy ? 'A solicitação pode já estar registrada. Ao sair, os dados serão perdidos e um novo preenchimento será outro pedido.' : 'Os dados preenchidos serão perdidos. A solicitação ainda não foi enviada.'}</p>
     <button type="button" autoFocus onClick={() => dialog.current?.close()}>Continuar preenchendo</button>
     <button type="button" onClick={() => { leaving.current = true; dialog.current?.close(); router.push('/'); }}>Descartar preenchimento</button>
   </dialog></>;
