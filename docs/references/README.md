@@ -30,6 +30,8 @@ autores presentes nos originais permanecem nas cópias.
 
 ## Divergências antes de implementar
 
+- Na implementação da US-003 em 2026-10-24, o usuário autorizou a capacidade administrativa do Auth restrita à troca imediata de e-mail do próprio usuário após conferir senha atual. O [ADR 0004](../adr/0004-troca-email-auth-administrativa.md) registra a exceção ao ADR 0001; perfil e senha continuam sob identidade do usuário. A autorização foi necessária porque desativar confirmação no cadastro e Secure email change não elimina a confirmação do novo endereço em `updateUser`.
+
 - Em 2026-10-24, o usuário restringiu as solicitações à manutenção, retirando denúncia de dano patrimonial como finalidade independente. O [ADR 0002](../adr/0002-escopo-manutencao.md) prevalece sobre a redação histórica da US-006 e das fontes importadas. Consulte-o ao definir o escopo de novas specs e implementações.
 - Na mesma entrevista, confirmou criação pelos três papéis e seleção de outro solicitante pelo Gestor, preservando a autoria real do envio. O [ADR 0003](../adr/0003-solicitante-e-autor-do-envio.md) orienta US-006/007/009 e as futuras consultas; prevalece sobre a restrição histórica de criação somente por Cliente. A implementação dessa ampliação ainda está pendente.
 - O README antigo descrevia Spring Boot e React/Flutter separados. O usuário confirmou Next.js com Supabase em 2026-10-17; a arquitetura vigente está no [ADR 0001](../adr/0001-nextjs-supabase.md) e no [README da raiz](../../README.md).
