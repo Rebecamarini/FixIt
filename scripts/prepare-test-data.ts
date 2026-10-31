@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 import { criarSolicitacao } from "../src/server/requests.ts";
 import { getSupabaseConfig } from "../src/server/config.ts";
 
@@ -19,10 +20,10 @@ const password = process.env.FIXIT_TEST_PASSWORD ?? (config.target === "local" ?
 if (password.length < 8) throw new Error("Defina FIXIT_TEST_PASSWORD com pelo menos oito caracteres.");
 const admin = createClient(config.url, adminKey, { auth: { persistSession: false, autoRefreshToken: false } });
 const fixtures = [
-  { email: "cliente1@fixit.example", nome: "Cliente Um (fictício)", matricula: "0001", papel: "Cliente" },
-  { email: "cliente2@fixit.example", nome: "Cliente Dois (fictício)", matricula: "0002", papel: "Cliente" },
-  { email: "manutentor@fixit.example", nome: "Manutentor (fictício)", matricula: "0003", papel: "Manutentor" },
-  { email: "gestor@fixit.example", nome: "Gestor (fictício)", matricula: "0004", papel: "Gestor" },
+  { email: "cliente1@fixit.example", nome: "Cliente Um (fictício)", papel: "Cliente", exemplo: "0001" },
+  { email: "cliente2@fixit.example", nome: "Cliente Dois (fictício)", papel: "Cliente", exemplo: "0002" },
+  { email: "manutentor@fixit.example", nome: "Manutentor (fictício)", papel: "Manutentor", exemplo: "0003" },
+  { email: "gestor@fixit.example", nome: "Gestor (fictício)", papel: "Gestor", exemplo: "0004" },
 ];
 const users = [];
 for (let page = 1; ; page++) {
@@ -32,27 +33,29 @@ for (let page = 1; ; page++) {
   if (result.data.users.length < 100) break;
 }
 for (const fixture of fixtures) {
-  const setor_id = "10000000-0000-4000-8000-000000000001";
   const existing = users.find((user) => user.email?.toLowerCase() === fixture.email);
   let id = existing?.id;
   if (existing) {
-    const profile = await admin.from("perfis").select("nome,matricula,setor_id,papel").eq("id", existing.id).single();
+    const profile = await admin.from("perfis").select("nome,papel,excluido_em,provisionamento_pendente").eq("id", existing.id).single();
     if (existing.app_metadata.fixit_fixture !== "spec001" || profile.error ||
-      profile.data.nome !== fixture.nome || profile.data.matricula !== fixture.matricula || profile.data.setor_id !== setor_id || profile.data.papel !== fixture.papel) {
+      profile.data.nome !== fixture.nome || profile.data.papel !== fixture.papel || profile.data.excluido_em || profile.data.provisionamento_pendente) {
       throw new Error(`Colisão em ${fixture.email}: conta preservada; revise administrativamente.`);
     }
   } else {
+    id = randomUUID();
+    const reserved = await admin.from("perfis").insert({ id, nome: fixture.nome, papel: fixture.papel, provisionamento_pendente: true });
+    if (reserved.error) throw new Error(`Falha ao preparar o papel inicial de ${fixture.email}.`);
     const created = await admin.auth.admin.createUser({
-      email: fixture.email, password, email_confirm: true,
-      user_metadata: { nome: fixture.nome, matricula: fixture.matricula, setor_id },
+      id, email: fixture.email, password, email_confirm: true,
+      user_metadata: { nome: fixture.nome },
       app_metadata: { fixit_fixture: "spec001" },
     });
     if (created.error) throw new Error(`Falha ao preparar ${fixture.email}; nenhum usuário existente foi alterado.`);
-    id = created.data.user.id;
-    const changed = await admin.from("perfis").update({ papel: fixture.papel }).eq("id", id);
-    if (changed.error) {
+    const assigned = await admin.from("perfis").update({ provisionamento_pendente: false }).eq("id", id);
+    if (assigned.error) {
       await admin.auth.admin.deleteUser(id);
-      throw new Error(`Falha ao atribuir papel administrativo a ${fixture.email}.`);
+      await admin.from("perfis").delete().eq("id", id);
+      throw new Error(`Falha ao preparar o papel inicial de ${fixture.email}.`);
     }
   }
   // Verifica senha sem regravá-la: reruns nunca trocam credenciais existentes.
@@ -64,7 +67,7 @@ for (const fixture of fixtures) {
       const input = {
         local: `Sala fictícia ${number}`,
         categoria_id: "20000000-0000-4000-8000-000000000001",
-        assunto: `SPEC-001 exemplo ${fixture.matricula}-${String(number).padStart(2, "0")}`,
+        assunto: `SPEC-001 exemplo ${fixture.exemplo}-${String(number).padStart(2, "0")}`,
         descricao: "Lâmpada fictícia apagada. Exemplo para consulta e isolamento.",
       };
       const existingRows = await client.from("solicitacoes").select("*").eq("assunto", input.assunto);

@@ -1,0 +1,13 @@
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin: 1.5rem 0; }
+.filters label { display: grid; gap: 0.4rem; font-weight: 600; min-width: 0; flex: 1 1 12rem; }
+.filters input, .filters select { width: 100%; min-width: 0; padding: 0.75rem; border: 1px solid #708790; border-radius: 0.35rem; background: white; color: inherit; font: inherit; }
+.filters button, .table button, .retry { min-height: 2.75rem; padding: 0.65rem 0.9rem; border: 0; border-radius: 0.35rem; background: #075b72; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+.tableContainer { overflow-x: auto; border: 1px solid #c5d4db; border-radius: 0.5rem; background: white; }
+.table { width: 100%; min-width: 36rem; border-collapse: collapse; }
+.table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #c5d4db; overflow-wrap: anywhere; }
+.table th { background: #e5f2f5; }
+.table th, .table :is(th, td):nth-child(3), .table :is(th, td):nth-child(4) { white-space: nowrap; }
+.table tr:last-child td { border-bottom: 0; }
+.table button:disabled, .retry:disabled { opacity: 0.65; cursor: wait; }
+.filters :is(input, select, button):focus-visible, .table button:focus-visible, .retry:focus-visible { outline: 3px solid #075b72; outline-offset: 3px; }
+.pagination { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.25rem; }

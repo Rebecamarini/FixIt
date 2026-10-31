@@ -29,7 +29,7 @@ SUPABASE_URL=https://gifqssocvuieagmndxwy.supabase.co
 SUPABASE_PUBLISHABLE_KEY=preencha-com-a-publishable-key-do-projeto
 ```
 
-Nunca use Secret key, service_role, senha do banco ou token da CLI na configuração da aplicação; não os publique em mensagens ou commits. O helper compartilhado `getSupabaseConfig` recusa destino ausente, mistura local/cloud, URLs com credenciais/caminhos/parâmetros e chaves administrativas. Configuração permanece no servidor, sem prefixo `NEXT_PUBLIC_`.
+Na configuração pública `SUPABASE_PUBLISHABLE_KEY`, nunca use Secret key, service_role, senha do banco ou token da CLI; não os publique em mensagens ou commits. O helper compartilhado `getSupabaseConfig` recusa destino ausente, mistura local/cloud, URLs com credenciais/caminhos/parâmetros e chaves administrativas. Configuração permanece no servidor, sem prefixo `NEXT_PUBLIC_`.
 
 Para diagnosticar e testar somente conexão/Auth settings do cloud sem tocar `.env.local`:
 
@@ -62,3 +62,17 @@ npx --no-install supabase config push --project-ref gifqssocvuieagmndxwy --workd
 `remote_only` no diff significa propriedade não declarada que o push preserva. Não interprete isso como mudança a aplicar. A reaplicação foi verificada sem diferenças nas propriedades declaradas. A página Next.js em execução também retornou HTTP 200 com diagnóstico cloud conectado, sem chave no HTML. A leitura pública de `/auth/v1/settings` confirmou provedor e-mail ativo e `mailer_autoconfirm=true` local/cloud; os testes incluem essa verificação e rejeição de chave inválida. O mínimo de oito caracteres foi verificado pelo diff autenticado da configuração. Cadastro/sessão reais após o trigger de perfis são evidência separada de BT-003 e da promoção de migrations.
 
 Nenhuma migration de negócio ou seed remoto foi aplicado por BT-002. A promoção depende de integração em `main`, CI aprovado do mesmo commit e CD; não execute reset remoto. O CD não publica Next.js.
+
+
+## Capacidades administrativas restritas
+
+O [ADR 0004](adr/0004-troca-email-auth-administrativa.md) autoriza a troca do
+próprio e-mail após validar sessão e senha atual. A [US-004](https://trello.com/c/waxQ1rjj)
+autoriza uma capacidade separada de consulta, criação e exclusão de contas por
+Gestor ativo. Ambas usam `SUPABASE_SECRET_KEY` exclusivamente no servidor Next.js.
+A chave pública continua obrigatória para
+operações comuns. Configure a chave do ambiente correspondente somente em
+`.env.local`/segredo do servidor, sem prefixo `NEXT_PUBLIC_` e sem Git. A CI gera
+a chave local descartável sem imprimi-la. O segredo de runtime e as migrations
+precisam ser instalados separadamente no ambiente de destino; esta capacidade
+não altera configurações remotas por si só.

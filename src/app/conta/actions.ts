@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createRequestClient, obterIdentidade } from "../../server/identity.ts";
 import { createSessionClient } from "../../server/session.ts";
-import { cadastrarCliente, entrarNaConta, type AccountState } from "../../server/account.ts";
+import { cadastrarCliente, entrarNaConta, sairDaConta, type AccountState } from "../../server/account.ts";
 
 export async function cadastrar(_previous: AccountState, form: FormData): Promise<AccountState> {
   try {
@@ -32,8 +32,8 @@ export async function entrar(_previous: AccountState, form: FormData): Promise<A
 export async function sair(): Promise<AccountState> {
   try {
     const client = await createSessionClient();
-    const { error } = await client.auth.signOut({ scope: "local" });
-    if (error) return { message: "Não foi possível sair. Tente novamente." };
+    const state = await sairDaConta(client);
+    if (!state.success) return state;
   } catch {
     return { message: "Não foi possível sair. Tente novamente." };
   }

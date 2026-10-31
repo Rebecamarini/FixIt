@@ -4,21 +4,22 @@ import { obterIdentidade } from "./identity.ts";
 import { PAGINA_MAXIMA_SOLICITACOES, TAMANHO_PAGINA_SOLICITACOES } from "./request-pagination.ts";
 
 export type Solicitacao = {
-  id: string; autor_id: string; categoria_id: string;
+  id: string; autor_id: string; solicitante_id: string; categoria_id: string;
   local: string; assunto: string; descricao: string;
   motivo: string | null; pessoas_areas_afetadas: string | null; frequencia: string | null;
   tipo_utilizacao: string | null; riscos: string | null; patrimonios_afetados: string | null;
   criado_em: string; estado: "Pendente";
 };
-export type ResultadoCriacao = { data: Solicitacao | null; erro: null | "nao_autenticado" | "nao_autorizado" | "dados_invalidos" | "falha_persistencia" };
+export type ResultadoCriacao = { ja_registrada?: boolean; autor_nome?: string; solicitante_nome?: string; data: Solicitacao | null; erro: null | "nao_autenticado" | "nao_autorizado" | "dados_invalidos" | "falha_persistencia" | "resultado_incerto" | "solicitante_indisponivel" | "categoria_indisponivel" };
 
 const required = ["local", "assunto", "descricao", "categoria_id"];
 const optional = ["motivo", "pessoas_areas_afetadas", "frequencia", "tipo_utilizacao", "riscos", "patrimonios_afetados"];
 
-export async function criarSolicitacao(client: SupabaseClient, input: unknown): Promise<ResultadoCriacao> {
+export async function criarSolicitacao(client: SupabaseClient, input: unknown, tentativa = crypto.randomUUID(), solicitante?: string, identidadeEsperada?: string): Promise<ResultadoCriacao> {
   const identidade = await obterIdentidade(client);
   if (!identidade) return { data: null, erro: "nao_autenticado" };
-  if (identidade.papel !== "Cliente") return { data: null, erro: "nao_autorizado" };
+  if (identidadeEsperada && identidadeEsperada !== identidade.id) return { data: null, erro: "nao_autorizado" };
+  if (solicitante && solicitante !== identidade.id && identidade.papel !== "Gestor") return { data: null, erro: "nao_autorizado" };
   if (!input || typeof input !== "object" || Array.isArray(input)) return { data: null, erro: "dados_invalidos" };
   const values = input as Record<string, unknown>;
   if (Object.keys(values).some(key => ![...required, ...optional].includes(key))) return { data: null, erro: "dados_invalidos" };
@@ -31,9 +32,21 @@ export async function criarSolicitacao(client: SupabaseClient, input: unknown): 
     row[key] = typeof value === "string" ? value.trim() || null : null;
   }
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.categoria_id!)) return { data: null, erro: "dados_invalidos" };
-  const { data, error } = await client.from("solicitacoes").insert(row).select("*").single();
-  if (error) return { data: null, erro: ["23502", "23503", "23514", "22P02"].includes(error.code) ? "dados_invalidos" : "falha_persistencia" };
-  return { data, erro: null };
+  try {
+    const { data, error } = await client.rpc("us009_enviar_solicitacao", {
+      dados: row, tentativa, identidade: identidade.id, solicitante: solicitante ?? null,
+    });
+    if (error) {
+      const erro: ResultadoCriacao["erro"] = error.code === "P0002" ? "solicitante_indisponivel"
+        : error.code === "P0003" ? "categoria_indisponivel"
+        : error.code === "42501" ? "nao_autorizado"
+        : ["23502", "23503", "23514", "22P02", "22023"].includes(error.code) ? "dados_invalidos"
+        : /^([0-9A-Z]{5})$/.test(error.code) && !error.code.startsWith("08") ? "falha_persistencia" : "resultado_incerto";
+      return { data: null, erro };
+    }
+    return { data: data.solicitacao, ja_registrada: data.ja_registrada,
+      autor_nome: data.autor_nome, solicitante_nome: data.solicitante_nome, erro: null };
+  } catch { return { data: null, erro: "resultado_incerto" }; }
 }
 
 export type ResultadoConsulta<T> = { data: T | null; erro: null | "nao_autenticado" | "nao_autorizado" | "dados_invalidos" | "nao_encontrado" | "falha_consulta" };
@@ -50,10 +63,10 @@ export async function listarSolicitacoes(client: SupabaseClient, pagina: unknown
   const offset = (pagina - 1) * TAMANHO_PAGINA_SOLICITACOES;
   const { data, error, count } = await client.from("solicitacoes")
     .select("id,assunto,categoria_id,criado_em,estado,categoria:categorias!inner(nome)", { count: "exact" })
-    .eq("autor_id", identidade.id).order("criado_em", { ascending: false }).order("id", { ascending: false })
+    .eq("solicitante_id", identidade.id).order("criado_em", { ascending: false }).order("id", { ascending: false })
     .range(offset, offset + TAMANHO_PAGINA_SOLICITACOES - 1);
   if (error?.code === "PGRST103") {
-    const total = await client.from("solicitacoes").select("id", { count: "exact", head: true }).eq("autor_id", identidade.id);
+    const total = await client.from("solicitacoes").select("id", { count: "exact", head: true }).eq("solicitante_id", identidade.id);
     if (total.error) return { data: null, erro: "falha_consulta" };
     return { data: { itens: [], pagina, tamanho_pagina: TAMANHO_PAGINA_SOLICITACOES, total: total.count ?? 0 }, erro: null };
   }
@@ -80,7 +93,7 @@ export async function obterSolicitacao(client: SupabaseClient, id: unknown): Pro
   if (!identidade) return { data: null, erro: "nao_autenticado" };
   if (identidade.papel !== "Cliente") return { data: null, erro: "nao_autorizado" };
   if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return { data: null, erro: "dados_invalidos" };
-  const { data, error } = await client.from("solicitacoes").select("*").eq("id", id).eq("autor_id", identidade.id).maybeSingle();
+  const { data, error } = await client.from("solicitacoes").select("*").eq("id", id).eq("solicitante_id", identidade.id).maybeSingle();
   if (error) return { data: null, erro: "falha_consulta" };
   return data ? { data, erro: null } : { data: null, erro: "nao_encontrado" };
 }

@@ -33,8 +33,12 @@ jobs:
             echo "Supabase startup failed; reproduce locally with npm run supabase:start."
             exit 1
           }
-          npx --no-install supabase db reset --local --no-seed --yes
-      - name: Configure local public connection without logging keys
+          npx --no-install supabase db reset --local --no-seed --version 20261025175916 --yes
+      - name: Verify US-009 migration preserves legacy requests and history
+        run: |
+          node tests/us009-migration.mjs
+          npx --no-install supabase migration up --local
+      - name: Configure local server connection without logging keys
         run: |
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
@@ -44,7 +48,7 @@ jobs:
           }));
           const key = status.PUBLISHABLE_KEY ?? status.ANON_KEY;
           if (status.API_URL !== 'http://127.0.0.1:54321' || !key) throw new Error('Invalid local Supabase configuration.');
-          writeFileSync('.env.local', `SUPABASE_TARGET=local\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${key}\n`, { mode: 0o600 });
+          writeFileSync('.env.local', `SUPABASE_TARGET=local\nSUPABASE_URL=${status.API_URL}\nSUPABASE_PUBLISHABLE_KEY=${key}\nSUPABASE_SECRET_KEY=${status.SECRET_KEY ?? status.SERVICE_ROLE_KEY}\n`, { mode: 0o600 });
           NODE
       - name: Verify lint, types, build, unit and all integration tests
         run: npm run verify
