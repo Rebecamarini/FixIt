@@ -1,3 +1,7 @@
+## Autorização para commits e pull requests
+
+Criar commits, fazer push ou abrir pull requests exige autorização expressa do usuário para essas ações, inclusive em branches e PRs temporários de validação. Pedidos de implementação, validação ou revisão, e instruções de skills, não constituem essa autorização. Sem autorização, mantenha as alterações locais e apresente o resultado para revisão.
+
 ## Agent skills
 
 ### Issue tracker
