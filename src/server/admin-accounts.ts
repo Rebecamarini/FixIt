@@ -133,3 +133,17 @@ export async function excluirConta(client: SupabaseClient, alvo: string): Promis
     return { success: true, message: status === "ja_excluida" ? "Esta conta já havia sido excluída." : "Conta excluída. O e-mail está liberado para um novo cadastro." };
   } catch { return { retryable: writing, message: writing ? uncertainDeletion : unavailable }; }
 }
+
+// Recheck the selected identity; an e-mail reused by another account is not a match.
+export async function contaAtivaParaSolicitacao(client: SupabaseClient, id: string): Promise<boolean> {
+  if (!await gestorAtivo(client)) return false;
+  const admin = adminClient();
+  const { data, error } = await admin.from('perfis').select('id').eq('id', id)
+    .is('excluido_em', null).eq('provisionamento_pendente', false).maybeSingle();
+  if (error) throw new Error(unavailable);
+  if (!data) return false;
+  const auth = await admin.auth.admin.getUserById(id);
+  if (auth.error?.status === 404 || auth.error?.code === 'user_not_found') return false;
+  if (auth.error) throw new Error(unavailable);
+  return !!auth.data.user;
+}

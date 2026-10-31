@@ -1,4 +1,4 @@
-import Link from "next/link";
+import FormularioSolicitacao from "./form";
 import { redirect } from "next/navigation";
 import { obterIdentidade } from "../../../server/identity.ts";
 import { createSessionClient } from "../../../server/session.ts";
@@ -15,7 +15,7 @@ export default async function NovaSolicitacaoPage() {
       <p className={styles.brand}>FixIt</p>
       <h1>Nova solicitação de manutenção</h1>
       <p>Inicie aqui um pedido de manutenção para informar um problema que precisa de atendimento.</p>
-      <Link href="/">Cancelar</Link>
+      <FormularioSolicitacao papel={identidade.papel} />
     </main>
   );
 }
