@@ -3,6 +3,8 @@
 [SPEC-001](https://trello.com/c/vWo76DXs) · [BT-003](https://trello.com/c/oRtndcsS).
 Base para S1-J01. As telas de cadastro/login foram acrescentadas pela
 [US-001 e avanço da US-002](specs/us-001-autocadastro.md).
+Login/logout dos três papéis e as pendências de aceite da US-002 estão no
+[registro de validação](validacao-us-002.md).
 
 ## Contratos
 
@@ -13,6 +15,11 @@ consulta Auth com `getUser()` e o perfil protegido, retornando
 `{ id: string UUID, papel: "Cliente" | "Manutentor" | "Gestor" }` ou `null`
 sem sessão/perfil. Falhas na consulta do perfil lançam erro sanitizado.
 Metadados editáveis nunca são fonte de autorização.
+
+`entrarNaConta(client, form)` valida o login e exige perfil protegido.
+`sairDaConta(client)` encerra somente a sessão atual com `scope: "local"` e
+retorna sucesso ou mensagem sanitizada; a Server Action redireciona ao login
+apenas no sucesso. Sessões independentes permanecem válidas.
 
 `src/proxy.ts` renova cookies e aplica `private, no-store` nas rotas `/`, `/conta` e
 `/solicitacoes`. Ao acrescentar rotas

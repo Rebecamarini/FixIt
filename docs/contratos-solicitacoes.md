@@ -1,5 +1,7 @@
 # Criação da solicitação — BT-004
 
+Decisão de produto posterior, ainda sem implementação: o [ADR 0003](adr/0003-solicitante-e-autor-do-envio.md) amplia a criação para os três papéis e permite ao Gestor selecionar outro solicitante, preservando sua autoria. US-007 e US-009 devem incorporar essa decisão. As regras e os campos abaixo descrevem o contrato atualmente implementado, que ainda restringe criação a Cliente e usa `autor_id` para autoria e acesso próprio.
+
 [SPEC-001](https://trello.com/c/vWo76DXs) · [BT-004](https://trello.com/c/MrgSRKFE).
 Base para S1-P01; formulário, anexos e transições administrativas ficam nas histórias.
 A [identidade compartilhada](contratos-identidade.md) continua sendo a fonte da sessão.

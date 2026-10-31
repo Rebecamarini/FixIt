@@ -77,3 +77,11 @@ export async function entrarNaConta(client: SupabaseClient, form: FormData): Pro
     return { values, message: indisponivel };
   }
 }
+
+export async function sairDaConta(client: SupabaseClient): Promise<AccountState> {
+  try {
+    const { error } = await client.auth.signOut({ scope: "local" });
+    if (!error) return { success: true };
+  } catch { /* Falha de rede: permitir uma nova tentativa sem detalhes internos. */ }
+  return { message: "Não foi possível sair. Tente novamente." };
+}
