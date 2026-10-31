@@ -1,0 +1,5 @@
+# Troca imediata de e-mail por capacidade administrativa restrita
+
+Em 2026-10-24, durante a implementação da US-003, o usuário autorizou uma exceção restrita ao ADR 0001: trocar o e-mail via `auth.admin.updateUserById`, exclusivamente no servidor e após verificar sessão, perfil próprio e senha atual. O ID vem da sessão e chamadas com alvo indicado pelo formulário são recusadas. Consultas e gravações de perfil continuam com identidade do usuário, grants por coluna e RLS.
+
+A integração local comprovou que `auth.updateUser({ email })` exige confirmação no novo endereço mesmo com `mailer_autoconfirm=true` e `double_confirm_changes=false`. Essa configuração não atende à troca imediata sem mensagens exigida pela spec. A operação administrativa usa `email_confirm: true`, preserva contas e sessões e depende de `SUPABASE_SECRET_KEY` somente no servidor; a chave pública continua obrigatória para todas as operações comuns. A alternativa de alterar o requisito para confirmação externa foi apresentada e não foi escolhida. Não ampliar essa capacidade a edição de terceiros, papéis, senha ou consultas de dados.
