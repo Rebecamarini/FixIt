@@ -40,7 +40,8 @@ Matriz: Cliente, Gestor e Manutentor em 390×900 e 1440×900. Para cada combina�
    sem campos ou ação de envio. Resposta de recarga não permite cache.
 4. Cancelar volta à inicial sem diálogo de confirmação.
 5. Após logout, voltar pelo histórico e abrir a URL direta exige login;
-   o título protegido não é apresentado.
+   o título protegido não é apresentado. Novo login retorna a `/` com o nome
+   do perfil; a sessão é encerrada novamente ao final.
 6. Página legível, sem transbordamento horizontal; capturas de celular e desktop
    inspecionadas visualmente.
 
@@ -48,7 +49,8 @@ Também são verificadas sessão com tokens inválidos e sessão não renovável
 Nesta última, uma sessão real é preservada, o logout real revoga o refresh token
 e apenas `expires_at` do cookie de teste recebe um valor passado. Isso força a
 renovação no servidor sem alterar seu relógio e sem simular o Auth. A resposta
-real recusa o refresh revogado e a aplicação exige login.
+real recusa o refresh revogado e a aplicação exige login. Nos dois casos,
+o roteiro também verifica novo login com destino `/` e encerra a nova sessão.
 
 O primeiro teste de navegador falhou pela ausência da entrada; após a alteração,
 a abertura e o cancelamento passaram. A matriz em desenvolvimento passou nos
@@ -82,7 +84,10 @@ node --conditions=react-server tests/browser/us006.mjs
 O script restringe a execução à aplicação em loopback e ao Supabase local e
 reutiliza `localAdmin()` somente para comparar as contagens de `solicitacoes` e
 `historico_solicitacoes`. Credenciais administrativas não são impressas.
-Capturas são gravadas em [evidencias/us-006](evidencias/us-006).
+Capturas são gravadas em [evidencias/us-006](evidencias/us-006) por padrão;
+`FIXIT_BROWSER_EVIDENCE_DIR` permite escolher outro diretório. O roteiro captura
+a página protegida, o login exigido após logout ou perda de sessão e a inicial
+após novo login. `FIXIT_BROWSER_URL` permite selecionar outra porta local.
 
 ## Resultados executados
 
@@ -113,11 +118,8 @@ contra a base acima; duas revisões independentes examinaram padrões e spec.
 - Standards: 0 violações documentadas e 0 smells relevantes.
 - Spec: 0 omissões, comportamentos incorretos ou ampliações de escopo.
 
-A página fornece a evidência local integrada da proteção exigida no CA-03 da
-US-002: acesso autenticado, logout, histórico, URL direta e sessão inválida ou não
-renovável. Isso complementa o [relatório histórico da US-002](validacao-us-002.md),
-que ainda não dispunha de página real de solicitações. Revisão humana e aceite no
-ambiente de testes permanecem etapas externas; nenhum card foi concluído.
+A comprovação integrada do CA-03, a reconferência posterior e as pendências de
+aceite estão no [relatório da US-002](validacao-us-002.md).
 
 Referências técnicas verificadas: guias instalados do Next.js 16.4.2 de páginas,
 Server Components e links; [SSR do Supabase](https://supabase.com/docs/guides/auth/server-side/creating-a-client)
