@@ -1,7 +1,8 @@
 # Identidade e perfil — BT-003
 
 [SPEC-001](https://trello.com/c/vWo76DXs) · [BT-003](https://trello.com/c/oRtndcsS).
-Base para S1-J01; não entrega suas telas de cadastro/login.
+Base para S1-J01. As telas de cadastro/login foram acrescentadas pela
+[US-001 e avanço da US-002](specs/us-001-autocadastro.md).
 
 ## Contratos
 
@@ -13,8 +14,8 @@ consulta Auth com `getUser()` e o perfil protegido, retornando
 sem sessão/perfil. Falhas na consulta do perfil lançam erro sanitizado.
 Metadados editáveis nunca são fonte de autorização.
 
-`src/proxy.ts` renova cookies e aplica `private, no-store` nas rotas `/conta` e
-`/solicitacoes`, reservadas para as histórias de produto. Ao acrescentar rotas
+`src/proxy.ts` renova cookies e aplica `private, no-store` nas rotas `/`, `/conta` e
+`/solicitacoes`. Ao acrescentar rotas
 com sessão, inclua-as no matcher; páginas autenticadas não devem usar ISR/cache
 compartilhado. O adaptador SSR propaga também cabeçalhos de renovação.
 
@@ -34,6 +35,9 @@ Cadastro usa `client.auth.signUp` com este payload:
 
 Sem confirmação de e-mail no ambiente configurado; cadastro retorna sessão.
 Isso não comprova posse do endereço. E-mail e senha não são copiados ao perfil.
+Na interface, a Server Action de cadastro usa um cliente com cookies isolados
+e encerra essa sessão automática antes de redirecionar ao login; o navegador
+somente recebe cookies de autenticação após entrar com e-mail e senha.
 Nome e matrícula devem ser strings JSON; números, booleanos, arrays e objetos
 são recusados, sem coerção. O trim segue `String.prototype.trim()` do JavaScript,
 incluindo NBSP (U+00A0) e BOM (U+FEFF); valores compostos só desses espaços
