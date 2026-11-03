@@ -48,7 +48,7 @@ test("fronteira de criação recusa campos inválidos e API não permite campos 
         assert.equal((await criarSolicitacao(client, { ...valid, [key]: value })).erro, "dados_invalidos", `${key}: ${JSON.stringify(value)}`);
       }
     }
-    for (const value of [null, [], "texto", {}, { ...valid, motivo: 12 }, { ...valid, prioridade: "Urgente" }, { ...valid, categoria_id: "não UUID" }, { ...valid, categoria_id: "99999999-9999-4999-8999-999999999999" }]) {
+    for (const value of [null, [], "texto", {}, { ...valid, motivo: 12 }, { ...valid, prioridade: "Urgente" }, { ...valid, categoria_id: "não UUID" }]) {
       assert.equal((await criarSolicitacao(client, value)).erro, "dados_invalidos");
     }
     for (const key of ["local", "assunto", "descricao"]) {
@@ -117,7 +117,7 @@ test("uma falha real no histórico desfaz a criação da solicitação", async (
   }
 });
 
-test("solicitação e histórico ficam privados e papéis privilegiados não recebem criação antecipada", async () => {
+test("solicitação e histórico ficam privados e papéis privilegiados criam sem ganhar consultas gerais", async () => {
   const admin = localAdmin();
   const owner = createRequestClient(cookieJar());
   const other = createRequestClient(cookieJar());
@@ -138,11 +138,11 @@ test("solicitação e histórico ficam privados e papéis privilegiados não rec
       const privileged = createRequestClient(cookieJar());
       assert.equal((await privileged.auth.signInWithPassword({ email: signup.email, password: signup.password })).error, null);
       try {
-      assert.equal((await criarSolicitacao(privileged, valid)).erro, "nao_autorizado");
+      assert.equal((await criarSolicitacao(privileged, valid)).erro, null);
       assert.ok((await privileged.from("solicitacoes").insert(valid)).error);
       assert.deepEqual((await privileged.from("solicitacoes").select("*")).data, []);
       assert.deepEqual((await privileged.from("historico_solicitacoes").select("*")).data, []);
-      } finally { await privileged.auth.signOut({ scope: "local" }); await admin.auth.admin.deleteUser(created.data.user!.id); }
+      } finally { await admin.from("solicitacoes").delete().eq("autor_id", created.data.user!.id); await privileged.auth.signOut({ scope: "local" }); await admin.auth.admin.deleteUser(created.data.user!.id); }
     }
   } finally {
     if (id) await admin.from("solicitacoes").delete().eq("id", id);

@@ -1,0 +1,149 @@
+
+> fixit@0.1.0 verify
+> npm run lint && npm run typecheck && npm run build && npm test && npm run test:integration
+
+
+> fixit@0.1.0 lint
+> eslint . --max-warnings=0
+
+
+> fixit@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+> fixit@0.1.0 build
+> next build
+
+▲ Next.js 16.4.2 (Turbopack)
+- Environments: .env.local
+✓ Running next.config took 7ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 383ms
+  Running TypeScript ...
+  Finished TypeScript in 738ms ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/2) ...
+✓ Generating static pages using 9 workers (2/2) in 64ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /conta/cadastrar
+├ ƒ /conta/entrar
+├ ƒ /conta/perfil
+├ ƒ /solicitacoes
+├ ƒ /solicitacoes/nova
+├ ƒ /usuarios
+└ ƒ /usuarios/nova
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> fixit@0.1.0 test
+> node --conditions=react-server --test --test-isolation=none tests/*.test.ts
+
+✔ login orienta aguardar quando o Auth limita tentativas, preservando e-mail sem devolver senha (19.619833ms)
+✔ login sanitiza indisponibilidade do Auth e preserva e-mail sem iniciar sessão (0.707708ms)
+✔ configuração ausente orienta a preparação sem revelar valores (0.192458ms)
+✔ falha de conexão ou chave recusada gera orientação sem revelar a chave (16.878ms)
+✔ recusa destino inválido e não devolve configuração sensível (0.214041ms)
+✔ distingue configuração incompleta de chave administrativa e URL inválida (0.407875ms)
+✔ exige seleção explícita e rejeita destino incompatível (0.120625ms)
+✔ consulta do perfil preserva orientação sanitizada de aguardar em HTTP 429 (1.073041ms)
+✔ consulta mantém sessão perdida e indisponibilidade distintas do limite de tentativas (1.080084ms)
+✔ salvamentos aguardam HTTP 429 da consulta sem gravar ou perder a sessão (1.348ms)
+✔ encerramento pendente orienta aguardar HTTP 429 da consulta sem revogar sessões (0.4395ms)
+✔ paginação da listagem interpreta a URL e limita os controles ao conjunto disponível (0.441584ms)
+✔ estado vazio representa somente Cliente sem solicitações próprias (0.05ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.306583
+
+> fixit@0.1.0 test:integration
+> node --conditions=react-server --test --test-isolation=none tests/*.integration.ts
+
+✔ Gestor lista, filtra e pagina contas; criação mantém sua sessão e papel fixo (3331.240916ms)
+✔ exclusão preserva identidade e histórico, bloqueia JWT antigo e libera e-mail sem herança (3409.5475ms)
+✔ Cliente, Manutentor e visitante não administram contas nem executam RPC privilegiada (3331.044125ms)
+✔ exclusões simultâneas do mesmo alvo registram um único evento (3449.193208ms)
+✔ exclusões mútuas concorrentes têm um vencedor e preservam um Gestor autorizado (3284.893792ms)
+✔ falha na remoção Auth não confirma exclusão completa; repetir libera o e-mail sem duplicar auditoria (3335.152625ms)
+✔ falha de finalização conserva papel definitivo sem acesso e permite conferir a criação sem senha (1757.547208ms)
+✔ indisponibilidade ao verificar sessão não é apresentada como falta de permissão (1526.90175ms)
+▶ Cliente, Manutentor e Gestor entram e mantêm sua identidade após renovação e nova requisição
+  ✔ Cliente (634.794875ms)
+  ✔ Manutentor (276.585583ms)
+  ✔ Gestor (276.039916ms)
+✔ Cliente, Manutentor e Gestor entram e mantêm sua identidade após renovação e nova requisição (2455.870416ms)
+AuthApiError: Invalid Refresh Token: Refresh Token Not Found
+    at handleError (/private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:84:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async _handleRequest (/private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:127:9)
+    at async _request (/private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:109:18)
+    at async /private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js:3910:24
+    at async /private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/helpers.js:213:36 {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+AuthApiError: Invalid Refresh Token: Refresh Token Not Found
+    at handleError (/private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:84:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async _handleRequest (/private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:127:9)
+    at async _request (/private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:109:18)
+    at async /private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js:3910:24
+    at async /private/tmp/fixit-pr-recheck/checkout/node_modules/@supabase/auth-js/dist/main/lib/helpers.js:213:36 {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+✔ sair encerra somente a sessão atual e impede renovar seu acesso aos dados (3127.272292ms)
+✔ login sem perfil protegido recusa a sessão criada pelo Auth (2671.045ms)
+✔ cadastro da aplicação valida nome, e-mail e senha sem exigir dados pessoais removidos (0.746291ms)
+✔ cadastro → login → logout usa Auth real e informa duplicatas sem devolver senha (1770.307125ms)
+✔ Auth, API do PostgreSQL e Storage reais respondem usando a chave pública do destino selecionado (17.152875ms)
+✔ o destino real recusa uma chave pública inválida (4.457041ms)
+✔ Auth real permite e-mail/senha sem confirmação de e-mail (2.898417ms)
+✔ cadastro real cria Cliente sem matrícula/setor e recupera identidade por cookies (1472.891417ms)
+✔ Auth e RLS recusam perfis inválidos, duplicatas e alterações posteriores de papel (1721.939041ms)
+✔ cada sessão vê somente o próprio perfil (1639.849167ms)
+✔ nome mantém validação textual e trim JavaScript no cadastro direto (2006.876666ms)
+✔ perfil próprio: os três papéis editam somente o nome (4899.835125ms)
+✔ perfil: edições independentes, isolamento, validação e proteção de ID/papel (3273.745292ms)
+✔ e-mail: senha atual, validação, troca imediata e sessões preservadas (1963.944708ms)
+✔ senha: validação, credencial nova e somente sessão atual renovável (2293.262791ms)
+✔ senha: falha de revogação informa resultado parcial e repetição não troca senha novamente (1928.334042ms)
+✔ senha alterada: HTTP 429 na consulta preserva resultado parcial e permite repetir só encerramento (2168.375375ms)
+✔ e-mail: concorrência tem um vencedor, duplicata não altera conta e não envia mensagens (3488.686875ms)
+✔ falhas de rede e limite de tentativas recebem orientação sem dados secretos (1530.377208ms)
+✔ consulta paginada retorna somente resumos próprios, vinte por página, mais recentes primeiro e vazio (1864.80475ms)
+✔ detalhe e histórico preservam isolamento, mesma ausência e cronologia com desempate (2365.797625ms)
+✔ preparação repetida preserva contas, exemplos, eventos e solicitações adicionais (4238.241708ms)
+✔ Cliente cria solicitação com autoria, data e evento inicial consistentes (1588.592125ms)
+✔ fronteira de criação recusa campos inválidos e API não permite campos protegidos ou eventos fabricados (2064.708958ms)
+✔ uma falha real no histórico desfaz a criação da solicitação (1764.843708ms)
+✔ solicitação e histórico ficam privados e papéis privilegiados criam sem ganhar consultas gerais (2210.428958ms)
+✔ três papéis enviam em nome próprio com evento inicial (2258.429583ms)
+✔ Gestor representa qualquer papel; consultas acompanham solicitante e reenvio é único (3013.968625ms)
+✔ envio concorrente à exclusão tem vencedor consistente (2043.8425ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85367.558583

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createSessionClient } from "../../server/session";
-import { listarSolicitacoes } from "../../server/requests";
-import { criarPaginacao, interpretarPagina, obterEstadoListagem } from "./listagem";
+import { listarSolicitacoes, type ResumoSolicitacao } from "../../server/requests";
+import { criarPaginacao, interpretarPagina, obterEstadoListagem, type EstadoListagem } from "./listagem";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Minhas solicitações | FixIt" };
@@ -42,40 +42,7 @@ export default async function MinhasSolicitacoes({ searchParams }: PageProps) {
         <p>Acompanhe os pedidos de manutenção que você registrou.</p>
       </header>
 
-      {estado === "vazio" ? (
-        <section className={styles.empty} aria-labelledby="empty-title">
-          <h2 id="empty-title">Nenhuma solicitação registrada</h2>
-          <p>Quando você enviar uma solicitação, ela aparecerá aqui.</p>
-        </section>
-      ) : estado === "pagina-vazia" ? (
-        <section className={styles.empty} aria-labelledby="page-empty-title">
-          <h2 id="page-empty-title">Esta página não possui solicitações</h2>
-          <p>Retorne a uma página anterior para continuar consultando seus pedidos.</p>
-        </section>
-      ) : (
-        <ul className={styles.list} aria-label="Solicitações próprias">
-          {itens.map((solicitacao) => (
-            <li key={solicitacao.id}>
-              <article className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <div>
-                    <p className={styles.identifier}>ID {solicitacao.id}</p>
-                    <h2>{solicitacao.assunto}</h2>
-                  </div>
-                  <span className={styles.status}>{solicitacao.estado}</span>
-                </div>
-                <dl className={styles.summary}>
-                  <div><dt>Categoria</dt><dd>{solicitacao.categoria.nome}</dd></div>
-                  <div><dt>Data</dt><dd><time dateTime={solicitacao.criado_em}>{formatadorData.format(new Date(solicitacao.criado_em))}</time></dd></div>
-                </dl>
-                <Link className={styles.detailsLink} href={`/solicitacoes/${solicitacao.id}`}>
-                  Abrir detalhes
-                </Link>
-              </article>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ListaSolicitacoes estado={estado} itens={itens} />
 
       {(paginacao.totalPaginas > 1 || pagina > 1) && (
         <nav className={styles.pagination} aria-label="Paginação das solicitações">
@@ -97,5 +64,42 @@ function MensagemDeAcesso({ titulo, children }: { titulo: string; children: Reac
         <p>{children}</p>
       </section>
     </main>
+  );
+}
+
+function ListaSolicitacoes({ estado, itens }: { estado: EstadoListagem; itens: ResumoSolicitacao[] }) {
+  return estado === "vazio" ? (
+    <section className={styles.empty} aria-labelledby="empty-title">
+      <h2 id="empty-title">Nenhuma solicitação registrada</h2>
+      <p>Quando você enviar uma solicitação, ela aparecerá aqui.</p>
+    </section>
+  ) : estado === "pagina-vazia" ? (
+    <section className={styles.empty} aria-labelledby="page-empty-title">
+      <h2 id="page-empty-title">Esta página não possui solicitações</h2>
+      <p>Retorne a uma página anterior para continuar consultando seus pedidos.</p>
+    </section>
+  ) : (
+    <ul className={styles.list} aria-label="Solicitações próprias">
+      {itens.map((solicitacao) => (
+        <li key={solicitacao.id}>
+          <article className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div>
+                <p className={styles.identifier}>ID {solicitacao.id}</p>
+                <h2>{solicitacao.assunto}</h2>
+              </div>
+              <span className={styles.status}>{solicitacao.estado}</span>
+            </div>
+            <dl className={styles.summary}>
+              <div><dt>Categoria</dt><dd>{solicitacao.categoria.nome}</dd></div>
+              <div><dt>Data</dt><dd><time dateTime={solicitacao.criado_em}>{formatadorData.format(new Date(solicitacao.criado_em))}</time></dd></div>
+            </dl>
+            <Link className={styles.detailsLink} href={`/solicitacoes/${solicitacao.id}`}>
+              Abrir detalhes
+            </Link>
+          </article>
+        </li>
+      ))}
+    </ul>
   );
 }

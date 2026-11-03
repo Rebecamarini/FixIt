@@ -1,0 +1,80 @@
+
+> fixit@0.1.0 check:static
+> npm run lint && npm run check:duplicates && npm run check:dependencies && npm run check:unused
+
+
+> fixit@0.1.0 lint
+> eslint . --max-warnings=0
+
+
+> fixit@0.1.0 check:duplicates
+> jscpd src --config .jscpd.json
+
+Using config from .jscpd.json
+No duplicates found.
+┌────────────┬────────────────┬─────────────┬──────────────┬──────────────┬──────────────────┬───────────────────┐
+│ Format     │ Files analyzed │ Total lines │ Total tokens │ Clones found │ Duplicated lines │ Duplicated tokens │
+├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
+│ css        │ 4              │ 78          │ 1934         │ 0            │ 0 (0.00%)        │ 0 (0.00%)         │
+├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
+│ tsx        │ 15             │ 751         │ 9683         │ 0            │ 0 (0.00%)        │ 0 (0.00%)         │
+├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
+│ typescript │ 16             │ 1047        │ 11180        │ 0            │ 0 (0.00%)        │ 0 (0.00%)         │
+├────────────┼────────────────┼─────────────┼──────────────┼──────────────┼──────────────────┼───────────────────┤
+│ Total:     │ 35             │ 1876        │ 22797        │ 0            │ 0 (0.00%)        │ 0 (0.00%)         │
+└────────────┴────────────────┴─────────────┴──────────────┴──────────────┴──────────────────┴───────────────────┘
+Found 0 clones.
+time: 16.780ms
+
+> fixit@0.1.0 check:dependencies
+> depcruise src --config .dependency-cruiser.cjs --output-type err && depcruise src --config .dependency-cruiser.cjs --metrics --output-type metrics
+
+
+✔ no dependency violations found (51 modules, 142 dependencies cruised)
+
+type    name                                                N     Ca     Ce  I (%)        size   #tls
+------- ---------------------------------------------- ------ ------ ------ ------ ----------- ------
+module  src/app/conta/cadastrar/page.tsx                    1      0      6   100%
+module  src/app/conta/entrar/page.tsx                       1      0      6   100%
+module  src/app/conta/perfil/page.tsx                       1      0      5   100%
+module  src/app/layout.tsx                                  1      0      3   100%
+module  src/app/page.tsx                                    1      0      6   100%
+module  src/app/solicitacoes/nova/page.tsx                  1      0      6   100%
+module  src/app/solicitacoes/page.tsx                       1      0      6   100%
+module  src/app/usuarios/nova/page.tsx                      1      0      6   100%
+module  src/app/usuarios/page.tsx                           1      0      7   100%
+module  src/proxy.ts                                        1      0      2   100%
+module  src/app/solicitacoes/nova/form.tsx                  1      1      7    88%
+module  src/app/usuarios/table.tsx                          1      1      7    88%
+module  src/app/conta/perfil/form.tsx                       1      1      6    86%
+module  src/app/conta/perfil/modal.tsx                      1      1      5    83%
+module  src/app/solicitacoes/nova/use-request-form.ts       1      1      5    83%
+module  src/app/usuarios/nova/form.tsx                      1      1      5    83%
+module  src/app/conta/actions.ts                            1      1      4    80%
+module  src/app/conta/perfil/panel.tsx                      1      1      4    80%
+module  src/app/solicitacoes/nova/actions.ts                1      1      3    75%
+module  src/server/connection.ts                            1      1      2    67%
+module  src/server/requests.ts                              1      2      4    67%
+module  src/app/conta/form.tsx                              1      3      5    63%
+module  src/server/request-submission.ts                    1      3      5    63%
+module  src/app/usuarios/actions.ts                         1      2      3    60%
+module  src/server/account.ts                               1      2      3    60%
+module  src/server/admin-accounts.ts                        1      5      6    55%
+module  src/app/conta/perfil/actions.ts                     1      2      2    50%
+module  src/app/solicitacoes/listagem.ts                    1      1      1    50%
+module  src/server/profile.ts                               1      5      4    44%
+module  src/server/identity.ts                              1     15      4    21%
+module  src/server/config.ts                                1      4      1    20%
+module  src/server/session.ts                               1     13      3    19%
+module  src/app/conta/form.module.css                       1      9      0     0%
+module  src/app/conta/perfil/modal.module.css               1      2      0     0%
+module  src/app/globals.css                                 1      1      0     0%
+module  src/app/page.module.css                             1      3      0     0%
+module  src/app/solicitacoes/nova/form.module.css           1      1      0     0%
+module  src/app/solicitacoes/page.module.css                1      1      0     0%
+module  src/app/usuarios/usuarios.module.css                1      2      0     0%
+module  src/lib/request-draft.ts                            1      3      0     0%
+module  src/server/request-pagination.ts                    1      2      0     0%
+
+> fixit@0.1.0 check:unused
+> knip --no-progress

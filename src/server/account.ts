@@ -1,5 +1,5 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AuthError, SupabaseClient } from "@supabase/supabase-js";
 import { obterIdentidade } from "./identity.ts";
 
 export type AccountState = {
@@ -12,29 +12,41 @@ export type AccountState = {
 const rejected = "Não foi possível criar a conta. Confira os dados; o e-mail pode já estar em uso.";
 const unavailable = "Não foi possível acessar o FixIt. Tente novamente em instantes.";
 
-export async function cadastrarCliente(client: SupabaseClient, form: FormData): Promise<AccountState> {
-  const text = (name: string) => typeof form.get(name) === "string" ? String(form.get(name)).trim() : "";
-  const values = { nome: text("nome"), email: text("email") };
-  const senha = form.get("senha");
+function registrationErrors(values: { nome: string; email: string }, senha: FormDataEntryValue | null) {
   const errors: Record<string, string> = {};
   if (!values.nome) errors.nome = "Informe seu nome.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errors.email = "Informe um e-mail válido.";
   if (typeof senha !== "string" || senha.length < 8) errors.senha = "A senha deve ter pelo menos 8 caracteres.";
+  return errors;
+}
+
+function registrationFailure(error: AuthError): AccountState {
+  if (error.status === 429) return { message: "Muitas tentativas. Aguarde um pouco antes de tentar novamente." };
+  if (error.code === "weak_password") return { errors: { senha: "Escolha uma senha mais forte, com pelo menos 8 caracteres." } };
+  return { message: error.name === "AuthRetryableFetchError" && error.status !== 500 ? unavailable : rejected };
+}
+
+export async function cadastrarCliente(client: SupabaseClient, form: FormData): Promise<AccountState> {
+  const text = (name: string) => typeof form.get(name) === "string" ? String(form.get(name)).trim() : "";
+  const values = { nome: text("nome"), email: text("email") };
+  const senha = form.get("senha");
+  const errors = registrationErrors(values, senha);
   if (Object.keys(errors).length) return { values, errors, message: "Confira os campos indicados." };
 
   try {
     const { data, error } = await client.auth.signUp({
       email: values.email, password: String(senha), options: { data: { nome: values.nome } },
     });
-    if (error) {
-      if (error.status === 429) return { values, message: "Muitas tentativas. Aguarde um pouco antes de tentar novamente." };
-      if (error.code === "weak_password") return { values, errors: { senha: "Escolha uma senha mais forte, com pelo menos 8 caracteres." } };
-      return { values, message: error.name === "AuthRetryableFetchError" && error.status !== 500 ? unavailable : rejected };
-    }
+    if (error) return { values, ...registrationFailure(error) };
     if (data.user?.identities?.length === 0) return { values, message: rejected };
     await client.auth.signOut({ scope: "local" }).catch(() => {});
     return { success: true };
   } catch { return { values, message: unavailable }; }
+}
+
+function loginFailure(error: AuthError): AccountState {
+  if (error.status === 429) return { message: "Muitas tentativas. Aguarde um pouco antes de tentar novamente." };
+  return { message: error.status === 400 ? "E-mail ou senha inválidos." : unavailable };
 }
 
 export async function entrarNaConta(client: SupabaseClient, form: FormData): Promise<AccountState> {
@@ -44,8 +56,7 @@ export async function entrarNaConta(client: SupabaseClient, form: FormData): Pro
   if (!email || typeof senha !== "string" || !senha) return { values, message: "Informe e-mail e senha." };
   try {
     const { error } = await client.auth.signInWithPassword({ email, password: senha });
-    if (error?.status === 429) return { values, message: "Muitas tentativas. Aguarde um pouco antes de tentar novamente." };
-    if (error) return { values, message: error.status === 400 ? "E-mail ou senha inválidos." : unavailable };
+    if (error) return { values, ...loginFailure(error) };
     if (!await obterIdentidade(client)) {
       await client.auth.signOut({ scope: "local" });
       return { values, message: "Não foi possível verificar seu perfil. Tente novamente." };

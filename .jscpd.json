@@ -1,0 +1,14 @@
+{
+  "minTokens": 100,
+  "minLines": 9,
+  "threshold": 3,
+  "mode": "mild",
+  "reporters": [
+    "console"
+  ],
+  "ignore": [
+    "**/*.d.{ts,mts,cts}",
+    "**/generated/**",
+    "**/__generated__/**"
+  ]
+}
