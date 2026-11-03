@@ -8,6 +8,11 @@ import userStyles from "./usuarios.module.css";
 
 export const dynamic = "force-dynamic";
 
+function accountCount(total: number, params: { q?: string; papel?: string }) {
+  if (total) return `${total} usuário(s)`;
+  return params.q || params.papel ? "Nenhum usuário encontrado." : "Ainda não há usuários ativos.";
+}
+
 export default async function UsuariosPage({ searchParams }: { searchParams: Promise<{ q?: string; papel?: string; pagina?: string; criada?: string }> }) {
   const params = await searchParams;
   let result;
@@ -29,7 +34,7 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Pro
       <label>Papel <select name="papel" defaultValue={params.papel ?? ""}><option value="">Todos</option><option>Cliente</option><option>Manutentor</option><option>Gestor</option></select></label>
       <button type="submit">Buscar</button>
     </form>
-    <p>{result.total ? `${result.total} usuário(s)` : params.q || params.papel ? "Nenhum usuário encontrado." : "Ainda não há usuários ativos."}</p>
+    <p>{accountCount(result.total, params)}</p>
     <AccountTable items={result.items} ownId={result.ownId} />
     {result.total > 0 && <>
       <nav aria-label="Paginação" className={userStyles.pagination}>

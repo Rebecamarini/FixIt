@@ -6,6 +6,15 @@ import { CredentialModal } from "./modal";
 import { salvar } from "./actions";
 import styles from "../form.module.css";
 
+function useUnsavedProfileWarning(dirty: boolean) {
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+}
+
 export function ProfileForm({ perfil }: { perfil: Perfil }) {
   const router = useRouter();
   const [values, setValues] = useState({ nome: perfil.nome });
@@ -15,12 +24,7 @@ export function ProfileForm({ perfil }: { perfil: Perfil }) {
   const [state, setState] = useState<ProfileState>({});
   const [busy, setBusy] = useState(false);
   const dirty = Object.keys(values).some(key => values[key as keyof typeof values] !== saved[key as keyof typeof saved]);
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  useUnsavedProfileWarning(dirty);
   function sessionLost(result: ProfileState) {
     if (result.sessionLost) { router.replace("/conta/entrar?sessao=encerrada"); return true; }
     return false;

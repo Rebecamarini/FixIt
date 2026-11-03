@@ -1,9 +1,22 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ProfileState } from "../../../server/profile.ts";
 import { salvarEmail, salvarSenha, encerrar } from "./actions";
 import styles from "../form.module.css";
 import modalStyles from "./modal.module.css";
+
+async function retryPasswordSessionClosure() {
+  const result = await encerrar();
+  return { ...result, message: `Sua senha foi alterada. ${result.message}` };
+}
+
+function keepDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== "Tab") return;
+  const fields = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('input:not(:disabled), button:not(:disabled)'));
+  const first = fields[0], last = fields.at(-1);
+  if (event.shiftKey && (document.activeElement === first || !fields.includes(document.activeElement as HTMLElement))) { event.preventDefault(); last?.focus(); }
+  else if (!event.shiftKey && (document.activeElement === last || !fields.includes(document.activeElement as HTMLElement))) { event.preventDefault(); first?.focus(); }
+}
 
 export function CredentialModal({ kind, onClose, onResult }: {
   kind: "email" | "senha"; onClose: () => void; onResult: (result: ProfileState) => void;
@@ -29,13 +42,7 @@ export function CredentialModal({ kind, onClose, onResult }: {
     return <div><label htmlFor={`modal-${name}`}>{label}</label><input id={`modal-${name}`} name={name} type={name === "email" ? "email" : "password"} autoComplete={name === "email" ? "email" : name === "senha_atual" ? "current-password" : "new-password"} value={values[name]} onChange={event => setValues({ ...values, [name]: event.target.value })} aria-invalid={Boolean(error)} aria-describedby={error ? `modal-${name}-error` : undefined} />
       {error && <span id={`modal-${name}-error`} className={styles.error}>{error}</span>}</div>;
   }
-  return <dialog ref={dialog} className={modalStyles.dialog} aria-labelledby="credential-title" onKeyDown={event => {
-    if (event.key !== "Tab") return;
-    const fields = Array.from(dialog.current!.querySelectorAll<HTMLElement>('input:not(:disabled), button:not(:disabled)'));
-    const first = fields[0], last = fields.at(-1);
-    if (event.shiftKey && (document.activeElement === first || !fields.includes(document.activeElement as HTMLElement))) { event.preventDefault(); last?.focus(); }
-    else if (!event.shiftKey && (document.activeElement === last || !fields.includes(document.activeElement as HTMLElement))) { event.preventDefault(); first?.focus(); }
-  }} onCancel={event => { event.preventDefault(); close(); }}>
+  return <dialog ref={dialog} className={modalStyles.dialog} aria-labelledby="credential-title" onKeyDown={keepDialogFocus} onCancel={event => { event.preventDefault(); close(); }}>
     <h2 id="credential-title">{kind === "email" ? "Alterar e-mail" : "Alterar senha"}</h2>
     {kind === "email" ? <p>O novo endereço será usado no próximo login. Suas sessões serão mantidas.</p> : <p>A nova senha deve ter pelo menos 8 caracteres e ser diferente da atual. A sessão atual será mantida; outras sessões deixarão de renovar, mas acessos já emitidos podem durar até expirar.</p>}
     {state.message && <p role="alert" tabIndex={-1} ref={errorMessage}>{state.message}</p>}
@@ -45,11 +52,11 @@ export function CredentialModal({ kind, onClose, onResult }: {
       setBusy(true);
       setValues(current => ({ ...current, senha_atual: "", nova_senha: "", confirmar_senha: "" }));
       try {
-        const result = state.partial ? await encerrar() : await (kind === "email" ? salvarEmail : salvarSenha)(data);
+        const result = state.partial ? await retryPasswordSessionClosure() : await (kind === "email" ? salvarEmail : salvarSenha)(data);
         setState(result);
         if (result.sessionLost) { onResult(result); onClose(); }
         else if (result.success) { onResult(result); onClose(); }
-      } catch { setState({ partial: state.partial, message: state.partial ? "Não foi possível confirmar o encerramento. Tente novamente somente o encerramento." : "Não foi possível confirmar a gravação. Confira os dados atuais antes de repetir." }); }
+      } catch { setState({ partial: state.partial, message: state.partial ? "Sua senha foi alterada, mas não foi possível confirmar o encerramento. Tente novamente somente o encerramento." : "Não foi possível confirmar a gravação. Confira os dados atuais antes de repetir." }); }
       finally { setBusy(false); }
     }}>
       <fieldset disabled={busy} className={styles.form} style={{ border: 0, padding: 0, margin: 0 }}>

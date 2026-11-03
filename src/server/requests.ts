@@ -15,35 +15,50 @@ export type ResultadoCriacao = { ja_registrada?: boolean; autor_nome?: string; s
 const required = ["local", "assunto", "descricao", "categoria_id"];
 const optional = ["motivo", "pessoas_areas_afetadas", "frequencia", "tipo_utilizacao", "riscos", "patrimonios_afetados"];
 
+function normalizarSolicitacao(input: unknown) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const values = input as Record<string, unknown>;
+  const fields = [...required, ...optional];
+  if (Object.keys(values).some(key => !fields.includes(key))) return null;
+  const row: Record<string, string | null> = {};
+  for (const key of fields) {
+    const value = values[key];
+    if (!valorValido(key, value)) return null;
+    row[key] = typeof value === "string" ? value.trim() || null : null;
+  }
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.categoria_id!) ? row : null;
+}
+
+function valorValido(key: string, value: unknown) {
+  if (required.includes(key)) return typeof value === "string" && !!value.trim();
+  return value == null || typeof value === "string";
+}
+
+function erroPersistencia(code: string): ResultadoCriacao["erro"] {
+  const errors: Record<string, ResultadoCriacao["erro"]> = {
+    P0002: "solicitante_indisponivel", P0003: "categoria_indisponivel", "42501": "nao_autorizado",
+    "23502": "dados_invalidos", "23503": "dados_invalidos", "23514": "dados_invalidos", "22P02": "dados_invalidos", "22023": "dados_invalidos",
+  };
+  if (Object.hasOwn(errors, code)) return errors[code];
+  return /^([0-9A-Z]{5})$/.test(code) && !code.startsWith("08") ? "falha_persistencia" : "resultado_incerto";
+}
+
+function envioAutorizado(identidade: { id: string; papel: string }, solicitante?: string, identidadeEsperada?: string) {
+  if (identidadeEsperada && identidadeEsperada !== identidade.id) return false;
+  return !solicitante || solicitante === identidade.id || identidade.papel === "Gestor";
+}
+
 export async function criarSolicitacao(client: SupabaseClient, input: unknown, tentativa = crypto.randomUUID(), solicitante?: string, identidadeEsperada?: string): Promise<ResultadoCriacao> {
   const identidade = await obterIdentidade(client);
   if (!identidade) return { data: null, erro: "nao_autenticado" };
-  if (identidadeEsperada && identidadeEsperada !== identidade.id) return { data: null, erro: "nao_autorizado" };
-  if (solicitante && solicitante !== identidade.id && identidade.papel !== "Gestor") return { data: null, erro: "nao_autorizado" };
-  if (!input || typeof input !== "object" || Array.isArray(input)) return { data: null, erro: "dados_invalidos" };
-  const values = input as Record<string, unknown>;
-  if (Object.keys(values).some(key => ![...required, ...optional].includes(key))) return { data: null, erro: "dados_invalidos" };
-  const row: Record<string, string | null> = {};
-  for (const key of [...required, ...optional]) {
-    const value = values[key];
-    if (required.includes(key) ? typeof value !== "string" || !value.trim() : value != null && typeof value !== "string") {
-      return { data: null, erro: "dados_invalidos" };
-    }
-    row[key] = typeof value === "string" ? value.trim() || null : null;
-  }
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.categoria_id!)) return { data: null, erro: "dados_invalidos" };
+  if (!envioAutorizado(identidade, solicitante, identidadeEsperada)) return { data: null, erro: "nao_autorizado" };
+  const row = normalizarSolicitacao(input);
+  if (!row) return { data: null, erro: "dados_invalidos" };
   try {
     const { data, error } = await client.rpc("us009_enviar_solicitacao", {
       dados: row, tentativa, identidade: identidade.id, solicitante: solicitante ?? null,
     });
-    if (error) {
-      const erro: ResultadoCriacao["erro"] = error.code === "P0002" ? "solicitante_indisponivel"
-        : error.code === "P0003" ? "categoria_indisponivel"
-        : error.code === "42501" ? "nao_autorizado"
-        : ["23502", "23503", "23514", "22P02", "22023"].includes(error.code) ? "dados_invalidos"
-        : /^([0-9A-Z]{5})$/.test(error.code) && !error.code.startsWith("08") ? "falha_persistencia" : "resultado_incerto";
-      return { data: null, erro };
-    }
+    if (error) return { data: null, erro: erroPersistencia(error.code) };
     return { data: data.solicitacao, ja_registrada: data.ja_registrada,
       autor_nome: data.autor_nome, solicitante_nome: data.solicitante_nome, erro: null };
   } catch { return { data: null, erro: "resultado_incerto" }; }
@@ -55,31 +70,46 @@ export type ResumoSolicitacao = Pick<Solicitacao, "id" | "assunto" | "categoria_
 };
 export type PaginaSolicitacoes = { itens: ResumoSolicitacao[]; pagina: number; tamanho_pagina: typeof TAMANHO_PAGINA_SOLICITACOES; total: number };
 
+function paginaValida(pagina: unknown): pagina is number {
+  return typeof pagina === "number" && Number.isSafeInteger(pagina) && pagina >= 1 && pagina <= PAGINA_MAXIMA_SOLICITACOES;
+}
+
+async function paginaVazia(client: SupabaseClient, identidade: string, pagina: number): Promise<ResultadoConsulta<PaginaSolicitacoes>> {
+  const total = await client.from("solicitacoes").select("id", { count: "exact", head: true }).eq("solicitante_id", identidade);
+  if (total.error) return { data: null, erro: "falha_consulta" };
+  return { data: { itens: [], pagina, tamanho_pagina: TAMANHO_PAGINA_SOLICITACOES, total: total.count ?? 0 }, erro: null };
+}
+
+function categoriaResumo(relacionamento: unknown) {
+  const categoria = Array.isArray(relacionamento) ? relacionamento[0] : relacionamento;
+  if (!categoria || typeof categoria !== "object" || !("nome" in categoria) || typeof categoria.nome !== "string") return null;
+  return { nome: categoria.nome };
+}
+
+function normalizarResumos(rows: (Omit<ResumoSolicitacao, "categoria"> & { categoria: unknown })[]) {
+  const itens: ResumoSolicitacao[] = [];
+  for (const row of rows) {
+    const categoria = categoriaResumo(row.categoria);
+    if (!categoria) return null;
+    itens.push({ ...row, categoria });
+  }
+  return itens;
+}
+
 export async function listarSolicitacoes(client: SupabaseClient, pagina: unknown = 1): Promise<ResultadoConsulta<PaginaSolicitacoes>> {
   const identidade = await obterIdentidade(client);
   if (!identidade) return { data: null, erro: "nao_autenticado" };
   if (identidade.papel !== "Cliente") return { data: null, erro: "nao_autorizado" };
-  if (typeof pagina !== "number" || !Number.isSafeInteger(pagina) || pagina < 1 || pagina > PAGINA_MAXIMA_SOLICITACOES) return { data: null, erro: "dados_invalidos" };
+  if (!paginaValida(pagina)) return { data: null, erro: "dados_invalidos" };
   const offset = (pagina - 1) * TAMANHO_PAGINA_SOLICITACOES;
   const { data, error, count } = await client.from("solicitacoes")
     .select("id,assunto,categoria_id,criado_em,estado,categoria:categorias!inner(nome)", { count: "exact" })
     .eq("solicitante_id", identidade.id).order("criado_em", { ascending: false }).order("id", { ascending: false })
     .range(offset, offset + TAMANHO_PAGINA_SOLICITACOES - 1);
-  if (error?.code === "PGRST103") {
-    const total = await client.from("solicitacoes").select("id", { count: "exact", head: true }).eq("solicitante_id", identidade.id);
-    if (total.error) return { data: null, erro: "falha_consulta" };
-    return { data: { itens: [], pagina, tamanho_pagina: TAMANHO_PAGINA_SOLICITACOES, total: total.count ?? 0 }, erro: null };
-  }
+  if (error?.code === "PGRST103") return paginaVazia(client, identidade.id, pagina);
   if (error) return { data: null, erro: "falha_consulta" };
-  const itens: ResumoSolicitacao[] = [];
-  for (const row of data) {
-    const relacionamento: unknown = row.categoria;
-    const categoria = Array.isArray(relacionamento) ? relacionamento[0] : relacionamento;
-    if (!categoria || typeof categoria !== "object" || !("nome" in categoria) || typeof categoria.nome !== "string") {
-      return { data: null, erro: "falha_consulta" };
-    }
-    itens.push({ ...row, categoria: { nome: categoria.nome } });
-  }
+  const itens = normalizarResumos(data);
+  if (!itens) return { data: null, erro: "falha_consulta" };
   return { data: { itens, pagina, tamanho_pagina: TAMANHO_PAGINA_SOLICITACOES, total: count ?? 0 }, erro: null };
 }
 

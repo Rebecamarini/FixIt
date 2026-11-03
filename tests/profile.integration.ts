@@ -144,6 +144,57 @@ test("senha: falha de revogação informa resultado parcial e repetição não t
   } finally { failure.mock.restore(); await f.cleanup(); }
 });
 
+test("senha alterada: HTTP 429 na consulta preserva resultado parcial e permite repetir só encerramento", async (t) => {
+  const { alterarSenha, encerrarOutrasSessoes } = await import("../src/server/profile.ts");
+  const f = await fixture();
+  const other = createRequestClient(cookieJar());
+  assert.equal((await other.auth.signInWithPassword({ email: f.signup.email, password: f.signup.password })).error, null);
+  const otherToken = (await other.auth.getSession()).data.session!.refresh_token;
+  const originalFetch = globalThis.fetch;
+  let passwordWrites = 0;
+  let logoutCalls = 0;
+  let limitedQueries = 0;
+  const failure = t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    const method = init?.method ?? (input instanceof Request ? input.method : "GET");
+    if (url.pathname === "/auth/v1/user" && method === "PUT") {
+      const response = await originalFetch(input, init);
+      if (response.ok) passwordWrites++;
+      return response;
+    }
+    if (url.pathname === "/auth/v1/user" && method === "GET" && passwordWrites > 0) {
+      limitedQueries++;
+      return new Response(JSON.stringify({ code: "over_request_rate_limit", message: "internal SQL stack" }), {
+        status: 429, headers: { "content-type": "application/json" },
+      });
+    }
+    if (url.pathname === "/auth/v1/logout" && url.searchParams.get("scope") === "others") logoutCalls++;
+    return originalFetch(input, init);
+  });
+  try {
+    const result = await alterarSenha(f.client, form({ senha_atual: f.signup.password, nova_senha: "Nova-consulta-123!", confirmar_senha: "Nova-consulta-123!" }));
+    assert.equal(result.partial, true);
+    assert.ok(!result.success);
+    assert.ok(!result.sessionLost);
+    assert.match(result.message!, /Sua senha foi alterada/);
+    assert.match(result.message!, /Muitas tentativas\. Aguarde/);
+    assert.match(result.message!, /somente o encerramento/);
+    assert.doesNotMatch(JSON.stringify(result), /internal|SQL|stack|Nova-consulta-123|Teste-local-123/);
+    assert.equal(passwordWrites, 1);
+    assert.equal(limitedQueries, 1);
+    assert.equal(logoutCalls, 0);
+    failure.mock.restore();
+    assert.equal((await consultarPerfil(createRequestClient(f.jar)))?.id, f.id);
+    assert.equal((await encerrarOutrasSessoes(createRequestClient(f.jar))).success, true);
+    assert.equal((await f.client.auth.refreshSession()).error, null);
+    assert.ok((await createRequestClient(cookieJar()).auth.refreshSession({ refresh_token: otherToken })).error);
+    const fresh = createRequestClient(cookieJar());
+    assert.ok((await fresh.auth.signInWithPassword({ email: f.signup.email, password: f.signup.password })).error);
+    assert.equal((await fresh.auth.signInWithPassword({ email: f.signup.email, password: "Nova-consulta-123!" })).error, null);
+    await fresh.auth.signOut({ scope: "local" });
+  } finally { failure.mock.restore(); await f.cleanup(); }
+});
+
 test("e-mail: concorrência tem um vencedor, duplicata não altera conta e não envia mensagens", async () => {
   const { alterarEmail } = await import("../src/server/profile.ts");
   const a = await fixture("Gestor"), b = await fixture("Manutentor");
