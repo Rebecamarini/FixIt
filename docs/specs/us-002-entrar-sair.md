@@ -94,7 +94,7 @@ Um bom teste verifica comportamento observável: identidade reconhecida, sessão
 - Blocked by: https://trello.com/c/3ouBfqLb (US-006, alternativa de integração).
 - Blocked by: https://trello.com/c/Qq6TOsG4 (US-010, alternativa de integração).
 
-Essas dependências são alternativas: basta ao menos uma tela real de solicitações integrada à sessão, com comportamento protegido verificável. Não é necessário concluir ambas. A dependência impede concluir o CA-03, sem impedir preparar e verificar a sessão. Conferir os blockers ao iniciar a execução. A validação ampliada de usuários permanece em [S1-J02](https://trello.com/c/A7gG1pal); o contrato de sessão de [S1-J01](https://trello.com/c/x3tAilqC) já tem base técnica, sem encerramento automático desse card.
+Essas dependências são alternativas: basta ao menos uma tela real de solicitações integrada à sessão, com comportamento protegido verificável. Não é necessário concluir ambas. O estado da comprovação e as pendências de aceite são mantidos no [relatório de validação da US-002](../validacao-us-002.md). A validação ampliada de usuários permanece em [S1-J02](https://trello.com/c/A7gG1pal); o contrato de sessão de [S1-J01](https://trello.com/c/x3tAilqC) já tem base técnica, sem encerramento automático desse card.
 
 **Critérios originais preservados:** CA-01, os três papéis entram com e-mail/senha; CA-02, credenciais inválidas não iniciam sessão e geram mensagem clara; CA-03, sair encerra a sessão e páginas protegidas voltam a exigir autenticação. Nenhuma conclusão automática de outras histórias.
 

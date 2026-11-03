@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type AuthError, type SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "./config.ts";
 import { createRequestClient, type Papel } from "./identity.ts";
 
@@ -14,14 +14,24 @@ export type ProfileState = {
   partial?: boolean;
 };
 const unavailable = "Não foi possível acessar o FixIt. Tente novamente em instantes.";
+const rateLimited = "Muitas tentativas. Aguarde um pouco antes de tentar novamente.";
+class ProfileRateLimitError extends Error {}
+export function profileErrorMessage(error: unknown, fallback: string) {
+  return error instanceof ProfileRateLimitError ? rateLimited : fallback;
+}
 const uncertain = "Não foi possível confirmar a gravação. Confira os dados atuais antes de repetir.";
 const lost: ProfileState = { sessionLost: true, message: "Sua sessão terminou. Entre novamente. As alterações não enviadas foram descartadas." };
 const text = (form: FormData, key: string) => typeof form.get(key) === "string" ? String(form.get(key)).trim() : "";
 
+function profileSessionLost(error: AuthError) {
+  return [401, 403].includes(error.status ?? 0) || error.name === "AuthSessionMissingError" || error.code === "refresh_token_not_found";
+}
+
 export async function consultarPerfil(client: SupabaseClient): Promise<Perfil | null> {
   const { data: { user }, error } = await client.auth.getUser();
   if (error) {
-    if ([401, 403].includes(error.status ?? 0) || error.name === "AuthSessionMissingError" || error.code === "refresh_token_not_found") return null;
+    if (error.status === 429) throw new ProfileRateLimitError(rateLimited);
+    if (profileSessionLost(error)) return null;
     throw new Error(unavailable);
   }
   if (!user) return null;
@@ -48,12 +58,17 @@ export async function salvarPerfil(client: SupabaseClient, form: FormData): Prom
     if (result.error) return { message: result.error.code === "42501" ? "Não foi possível salvar seu perfil. Recarregue a página e tente novamente." : uncertain };
     if (!result.data) return lost;
     return { success: true, perfil: { ...result.data, email: perfil.email }, message: "Perfil salvo." };
-  } catch { return { message: writing ? uncertain : unavailable }; }
+  } catch (error) { return { message: profileErrorMessage(error, writing ? uncertain : unavailable) }; }
+}
+
+function credentialSessionLost(error: { status?: number; code?: string }) {
+  return [401, 403].includes(error.status ?? 0)
+    || ["session_not_found", "refresh_token_not_found"].includes(error.code ?? "");
 }
 
 function authError(error: { status?: number; code?: string }, writing = false): ProfileState {
-  if (error.status === 429) return { message: "Muitas tentativas. Aguarde um pouco antes de tentar novamente." };
-  if ([401, 403].includes(error.status ?? 0) || ["session_not_found", "refresh_token_not_found"].includes(error.code ?? "")) return lost;
+  if (error.status === 429) return { message: rateLimited };
+  if (credentialSessionLost(error)) return lost;
   if (["email_exists", "user_already_exists"].includes(error.code ?? "")) return { errors: { email: "Este e-mail já está em uso. Informe outro." }, message: "Confira o e-mail." };
   if (error.code === "weak_password") return { errors: { nova_senha: "Escolha uma senha mais forte, com pelo menos 8 caracteres." }, message: "Confira a nova senha." };
   return { message: writing ? uncertain : unavailable };
@@ -72,6 +87,24 @@ async function verificarSenha(perfil: Perfil, senha: FormDataEntryValue | null):
   } finally { await verifier.auth.signOut({ scope: "local" }).catch(() => {}); }
 }
 
+function emailUpdateFailure(error: AuthError): ProfileState {
+  if (error.status === 500) return { errors: { email: "Não foi possível confirmar a troca. O endereço pode estar em uso; confira seu e-mail atual antes de tentar outro." }, message: uncertain };
+  if ([401, 403].includes(error.status ?? 0)) return { message: "A alteração de e-mail está indisponível. Procure o responsável pelo FixIt." };
+  return authError(error, true);
+}
+
+async function updateEmail(perfil: Perfil, email: string): Promise<ProfileState> {
+  const { url } = getSupabaseConfig();
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  if (!secret) return { message: "A alteração de e-mail está indisponível. Procure o responsável pelo FixIt." };
+  // Exceção restrita aprovada no ADR 0004; ID obtido da sessão, nunca do formulário.
+  const admin = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await admin.auth.admin.updateUserById(perfil.id, { email, email_confirm: true });
+  if (error) return emailUpdateFailure(error);
+  if (data.user?.email?.toLowerCase() !== email.toLowerCase() || data.user.new_email) return { message: "A troca imediata de e-mail não pôde ser confirmada. Confira seu e-mail atual antes de repetir e procure o responsável pelo FixIt." };
+  return { success: true, email: data.user.email, message: "E-mail alterado. Use o novo endereço no próximo login." };
+}
+
 export async function alterarEmail(client: SupabaseClient, form: FormData): Promise<ProfileState> {
   let writing = false;
   try {
@@ -83,18 +116,8 @@ export async function alterarEmail(client: SupabaseClient, form: FormData): Prom
     const invalid = await verificarSenha(perfil, form.get("senha_atual"));
     if (invalid) return invalid;
     writing = true;
-    const { url } = getSupabaseConfig();
-    const secret = process.env.SUPABASE_SECRET_KEY;
-    if (!secret) return { message: "A alteração de e-mail está indisponível. Procure o responsável pelo FixIt." };
-    // Exceção restrita aprovada no ADR 0004; ID obtido da sessão, nunca do formulário.
-    const admin = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data, error } = await admin.auth.admin.updateUserById(perfil.id, { email, email_confirm: true });
-    if (error?.status === 500) return { errors: { email: "Não foi possível confirmar a troca. O endereço pode estar em uso; confira seu e-mail atual antes de tentar outro." }, message: uncertain };
-    if (error && [401, 403].includes(error.status ?? 0)) return { message: "A alteração de e-mail está indisponível. Procure o responsável pelo FixIt." };
-    if (error) return authError(error, true);
-    if (data.user?.email?.toLowerCase() !== email.toLowerCase() || data.user.new_email) return { message: "A troca imediata de e-mail não pôde ser confirmada. Confira seu e-mail atual antes de repetir e procure o responsável pelo FixIt." };
-    return { success: true, email: data.user.email, message: "E-mail alterado. Use o novo endereço no próximo login." };
-  } catch { return { message: writing ? uncertain : unavailable }; }
+    return await updateEmail(perfil, email);
+  } catch (error) { return { message: profileErrorMessage(error, writing ? uncertain : unavailable) }; }
 }
 
 export async function encerrarOutrasSessoes(client: SupabaseClient): Promise<ProfileState> {
@@ -104,7 +127,18 @@ export async function encerrarOutrasSessoes(client: SupabaseClient): Promise<Pro
     if (!error) return { success: true, message: "Outras sessões não poderão ser renovadas. A sessão atual foi mantida; acessos já emitidos podem durar até expirar." };
     const result = authError(error);
     return result.sessionLost ? result : { ...result, partial: true, message: `${result.message} Tente novamente somente o encerramento das outras sessões.` };
-  } catch { return { partial: true, message: "Não foi possível encerrar as outras sessões. Tente novamente somente o encerramento." }; }
+  } catch (error) {
+    return { partial: true, message: `${profileErrorMessage(error, "Não foi possível encerrar as outras sessões.")} Tente novamente somente o encerramento das outras sessões.` };
+  }
+}
+
+function passwordErrors(current: FormDataEntryValue | null, password: FormDataEntryValue | null, confirmation: FormDataEntryValue | null) {
+  const errors: Record<string, string> = {};
+  if (typeof current !== "string" || !current) errors.senha_atual = "Informe sua senha atual.";
+  if (typeof password !== "string" || password.length < 8) errors.nova_senha = "A nova senha deve ter pelo menos 8 caracteres.";
+  else if (password === current) errors.nova_senha = "A nova senha deve ser diferente da atual.";
+  if (password !== confirmation) errors.confirmar_senha = "A confirmação deve coincidir com a nova senha.";
+  return errors;
 }
 
 export async function alterarSenha(client: SupabaseClient, form: FormData): Promise<ProfileState> {
@@ -115,11 +149,7 @@ export async function alterarSenha(client: SupabaseClient, form: FormData): Prom
     if (manipulated(form, ["senha_atual", "nova_senha", "confirmar_senha"])) return { message: "Envie somente os campos de senha da sua conta." };
     const current = form.get("senha_atual");
     const password = form.get("nova_senha");
-    const errors: Record<string, string> = {};
-    if (typeof current !== "string" || !current) errors.senha_atual = "Informe sua senha atual.";
-    if (typeof password !== "string" || password.length < 8) errors.nova_senha = "A nova senha deve ter pelo menos 8 caracteres.";
-    else if (password === current) errors.nova_senha = "A nova senha deve ser diferente da atual.";
-    if (password !== form.get("confirmar_senha")) errors.confirmar_senha = "A confirmação deve coincidir com a nova senha.";
+    const errors = passwordErrors(current, password, form.get("confirmar_senha"));
     if (Object.keys(errors).length) return { errors, message: "Confira os campos indicados." };
     const invalid = await verificarSenha(perfil, current);
     if (invalid) return invalid;
@@ -129,5 +159,5 @@ export async function alterarSenha(client: SupabaseClient, form: FormData): Prom
     const result = await encerrarOutrasSessoes(client);
     if (!result.success) return { ...result, partial: true, message: `Sua senha foi alterada, mas não foi possível confirmar o encerramento das outras sessões. ${result.message}` };
     return { ...result, message: `Senha alterada. ${result.message}` };
-  } catch { return { message: writing ? uncertain : unavailable }; }
+  } catch (error) { return { message: profileErrorMessage(error, writing ? uncertain : unavailable) }; }
 }

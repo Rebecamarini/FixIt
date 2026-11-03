@@ -1,0 +1,5 @@
+PASS own submission, lost response, retry, new identical request: cliente1
+PASS own submission, lost response, retry, new identical request: manutentor
+PASS own submission, lost response, retry, new identical request: gestor
+PASS category correction, deleted requester, native exit warning, session and identity recovery
+PASS representation, confirmation, normalization and atomic history 10

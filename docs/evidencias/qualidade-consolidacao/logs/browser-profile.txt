@@ -1,0 +1,6 @@
+{"role":"Cliente","width":390,"result":"passed","scenarios":["opening","save-name","email","password-before-write","password-partial","retry-limited","retry-success","name-success","email-success","persisted-reload"]}
+{"role":"Cliente","width":1440,"result":"passed","scenarios":["opening","save-name","email","password-before-write","password-partial","retry-limited","retry-success","name-success","email-success","persisted-reload"]}
+{"role":"Manutentor","width":390,"result":"passed","scenarios":["opening","save-name","email","password-before-write","password-partial","retry-limited","retry-success","name-success","email-success","persisted-reload"]}
+{"role":"Manutentor","width":1440,"result":"passed","scenarios":["opening","save-name","email","password-before-write","password-partial","retry-limited","retry-success","name-success","email-success","persisted-reload"]}
+{"role":"Gestor","width":390,"result":"passed","scenarios":["opening","save-name","email","password-before-write","password-partial","retry-limited","retry-success","name-success","email-success","persisted-reload"]}
+{"role":"Gestor","width":1440,"result":"passed","scenarios":["opening","save-name","email","password-before-write","password-partial","retry-limited","retry-success","name-success","email-success","persisted-reload"]}

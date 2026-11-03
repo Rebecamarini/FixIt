@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@6.42.1/schema.json",
+  "entry": ["tests/*.test.ts", "tests/*.integration.ts", "scripts/*.ts"],
+  "project": ["src/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}", "tests/**/*.ts", "scripts/**/*.ts", "*.{js,mjs,cjs,ts}", "!**/*.d.{ts,mts,cts}", "!**/generated/**", "!**/__generated__/**"],
+  "ignoreBinaries": [
+    // Linux util-linux: troca de grupo Docker em sessões abertas antes do grant.
+    "sg"
+  ]
+}

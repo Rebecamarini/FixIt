@@ -1,0 +1,76 @@
+
+> fixit@0.1.0 test:integration
+> node --conditions=react-server --test --test-isolation=none tests/*.integration.ts
+
+✔ Gestor lista, filtra e pagina contas; criação mantém sua sessão e papel fixo (3170.408667ms)
+✔ exclusão preserva identidade e histórico, bloqueia JWT antigo e libera e-mail sem herança (3595.197458ms)
+✔ Cliente, Manutentor e visitante não administram contas nem executam RPC privilegiada (3603.189041ms)
+✔ exclusões simultâneas do mesmo alvo registram um único evento (3136.292542ms)
+✔ exclusões mútuas concorrentes têm um vencedor e preservam um Gestor autorizado (3298.1015ms)
+✔ falha na remoção Auth não confirma exclusão completa; repetir libera o e-mail sem duplicar auditoria (3474.964958ms)
+✔ falha de finalização conserva papel definitivo sem acesso e permite conferir a criação sem senha (1864.207416ms)
+✔ indisponibilidade ao verificar sessão não é apresentada como falta de permissão (1533.704917ms)
+▶ Cliente, Manutentor e Gestor entram e mantêm sua identidade após renovação e nova requisição
+  ✔ Cliente (322.389375ms)
+  ✔ Manutentor (417.893708ms)
+  ✔ Gestor (460.690375ms)
+✔ Cliente, Manutentor e Gestor entram e mantêm sua identidade após renovação e nova requisição (2535.664125ms)
+AuthApiError: Invalid Refresh Token: Refresh Token Not Found
+    at handleError (/Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:84:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async _handleRequest (/Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:127:9)
+    at async _request (/Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:109:18)
+    at async /Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js:3910:24
+    at async /Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/helpers.js:213:36 {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+AuthApiError: Invalid Refresh Token: Refresh Token Not Found
+    at handleError (/Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:84:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async _handleRequest (/Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:127:9)
+    at async _request (/Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/fetch.js:109:18)
+    at async /Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js:3910:24
+    at async /Users/jrmelo317/Documents/GitHub/FixIt/node_modules/@supabase/auth-js/dist/main/lib/helpers.js:213:36 {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+✔ sair encerra somente a sessão atual e impede renovar seu acesso aos dados (2086.716208ms)
+✔ login sem perfil protegido recusa a sessão criada pelo Auth (1926.09425ms)
+✔ cadastro da aplicação valida nome, e-mail e senha sem exigir dados pessoais removidos (0.817ms)
+✔ cadastro → login → logout usa Auth real e informa duplicatas sem devolver senha (1641.26ms)
+✔ Auth, API do PostgreSQL e Storage reais respondem usando a chave pública do destino selecionado (31.553042ms)
+✔ o destino real recusa uma chave pública inválida (6.3545ms)
+✔ Auth real permite e-mail/senha sem confirmação de e-mail (3.499875ms)
+✔ cadastro real cria Cliente sem matrícula/setor e recupera identidade por cookies (1528.935208ms)
+✔ Auth e RLS recusam perfis inválidos, duplicatas e alterações posteriores de papel (1749.474334ms)
+✔ cada sessão vê somente o próprio perfil (1575.365542ms)
+✔ nome mantém validação textual e trim JavaScript no cadastro direto (2015.879291ms)
+✔ perfil próprio: os três papéis editam somente o nome (7073.464167ms)
+✔ perfil: edições independentes, isolamento, validação e proteção de ID/papel (5106.505917ms)
+✔ e-mail: senha atual, validação, troca imediata e sessões preservadas (1978.832833ms)
+✔ senha: validação, credencial nova e somente sessão atual renovável (2295.097875ms)
+✔ senha: falha de revogação informa resultado parcial e repetição não troca senha novamente (1964.71175ms)
+✔ senha alterada: HTTP 429 na consulta preserva resultado parcial e permite repetir só encerramento (2252.215334ms)
+✔ e-mail: concorrência tem um vencedor, duplicata não altera conta e não envia mensagens (3448.828666ms)
+✔ falhas de rede e limite de tentativas recebem orientação sem dados secretos (1652.118125ms)
+✔ consulta paginada retorna somente resumos próprios, vinte por página, mais recentes primeiro e vazio (2001.974791ms)
+✔ detalhe e histórico preservam isolamento, mesma ausência e cronologia com desempate (2331.383875ms)
+✔ preparação repetida preserva contas, exemplos, eventos e solicitações adicionais (5432.09425ms)
+✔ Cliente cria solicitação com autoria, data e evento inicial consistentes (1506.63925ms)
+✔ fronteira de criação recusa campos inválidos e API não permite campos protegidos ou eventos fabricados (1943.592875ms)
+✔ uma falha real no histórico desfaz a criação da solicitação (1704.436167ms)
+✔ solicitação e histórico ficam privados e papéis privilegiados criam sem ganhar consultas gerais (2128.55525ms)
+✔ três papéis enviam em nome próprio com evento inicial (2041.563417ms)
+✔ Gestor representa qualquer papel; consultas acompanham solicitante e reenvio é único (3184.873375ms)
+✔ envio concorrente à exclusão tem vencedor consistente (2134.16425ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89064.048708

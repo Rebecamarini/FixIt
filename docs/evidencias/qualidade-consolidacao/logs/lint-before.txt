@@ -1,0 +1,48 @@
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/app/conta/perfil/form.tsx
+  9:8  error  Function 'ProfileForm' has too many lines (52). Maximum allowed is 50  max-lines-per-function
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/app/conta/perfil/modal.tsx
+  13:8  error  Function 'CredentialModal' has too many lines (55). Maximum allowed is 50  max-lines-per-function
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/app/solicitacoes/nova/form.tsx
+   11:16  error  Function 'FormularioSolicitacao' has too many lines (160). Maximum allowed is 50  max-lines-per-function
+   11:16  error  Function 'FormularioSolicitacao' has a complexity of 30. Maximum allowed is 10    complexity
+   95:86  error  Async arrow function has a complexity of 13. Maximum allowed is 10                complexity
+  141:55  error  Arrow function has a complexity of 11. Maximum allowed is 10                      complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/app/solicitacoes/page.tsx
+  20:16  error  Async function 'MinhasSolicitacoes' has too many lines (65). Maximum allowed is 50  max-lines-per-function
+  20:16  error  Async function 'MinhasSolicitacoes' has a complexity of 11. Maximum allowed is 10   complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/app/usuarios/nova/form.tsx
+  8:8  error  Function 'CreateAccountForm' has a complexity of 15. Maximum allowed is 10  complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/app/usuarios/page.tsx
+  11:16  error  Async function 'UsuariosPage' has a complexity of 12. Maximum allowed is 10  complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/server/account.ts
+  15:8  error  Async function 'cadastrarCliente' has a complexity of 15. Maximum allowed is 10  complexity
+  40:8  error  Async function 'entrarNaConta' has a complexity of 11. Maximum allowed is 10     complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/server/admin-accounts.ts
+   28:8  error  Async function 'listarContas' has a complexity of 13. Maximum allowed is 10  complexity
+   43:8  error  Async function 'criarConta' has a complexity of 32. Maximum allowed is 10    complexity
+  114:8  error  Async function 'excluirConta' has a complexity of 13. Maximum allowed is 10  complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/server/identity.ts
+  15:8  error  Async function 'obterIdentidade' has a complexity of 11. Maximum allowed is 10  complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/server/profile.ts
+   64:1  error  Function 'authError' has a complexity of 11. Maximum allowed is 10           complexity
+   85:8  error  Async function 'alterarEmail' has a complexity of 18. Maximum allowed is 10  complexity
+  122:8  error  Async function 'alterarSenha' has a complexity of 15. Maximum allowed is 10  complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/server/request-submission.ts
+  8:8  error  Async function 'enviarSolicitacao' has a complexity of 28. Maximum allowed is 10  complexity
+
+/Users/jrmelo317/Documents/GitHub/FixIt/src/server/requests.ts
+  18:8  error  Async function 'criarSolicitacao' has a complexity of 29. Maximum allowed is 10    complexity
+  58:8  error  Async function 'listarSolicitacoes' has a complexity of 20. Maximum allowed is 10  complexity
+
+✖ 22 problems (22 errors, 0 warnings)

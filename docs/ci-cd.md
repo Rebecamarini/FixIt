@@ -17,7 +17,12 @@ sem filtros por arquivos. Node vem de `.nvmrc` (24.18.0), npm é 11.16.0;
 `npm ci` instala o lockfile, incluindo a CLI Supabase 2.121.0. As actions estão
 fixadas por SHA. Alterações de versões devem manter esses arquivos coerentes.
 
-O job **CI** inicia a stack local completa, sem excluir serviços ou ignorar
+Antes dos serviços, o job **CI** executa `npm run check:static`: lint com
+limites de funções, duplicidade, ciclos/contagens e código/pacotes sem uso.
+Consulte [as políticas e semânticas da SPEC-002](qualidade-estatica.md). Uma
+violação ou erro de análise impede stack, build e testes.
+
+Após essas verificações, o job **CI** inicia a stack local completa, sem excluir serviços ou ignorar
 health checks, e executa `db reset --local --no-seed` no runner descartável.
 Assim todas as migrations são aplicadas desde banco vazio, sem depender de
 cache de volumes, cloud ou seeds manuais. A conexão local pública é gravada em

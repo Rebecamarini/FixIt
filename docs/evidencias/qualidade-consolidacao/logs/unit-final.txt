@@ -1,0 +1,25 @@
+
+> fixit@0.1.0 test
+> node --conditions=react-server --test --test-isolation=none tests/*.test.ts
+
+✔ login orienta aguardar quando o Auth limita tentativas, preservando e-mail sem devolver senha (19.590292ms)
+✔ login sanitiza indisponibilidade do Auth e preserva e-mail sem iniciar sessão (0.71275ms)
+✔ configuração ausente orienta a preparação sem revelar valores (0.185291ms)
+✔ falha de conexão ou chave recusada gera orientação sem revelar a chave (14.986791ms)
+✔ recusa destino inválido e não devolve configuração sensível (0.192792ms)
+✔ distingue configuração incompleta de chave administrativa e URL inválida (0.376583ms)
+✔ exige seleção explícita e rejeita destino incompatível (0.102834ms)
+✔ consulta do perfil preserva orientação sanitizada de aguardar em HTTP 429 (1.024542ms)
+✔ consulta mantém sessão perdida e indisponibilidade distintas do limite de tentativas (1.042042ms)
+✔ salvamentos aguardam HTTP 429 da consulta sem gravar ou perder a sessão (1.366708ms)
+✔ encerramento pendente orienta aguardar HTTP 429 da consulta sem revogar sessões (0.445ms)
+✔ paginação da listagem interpreta a URL e limita os controles ao conjunto disponível (0.451667ms)
+✔ estado vazio representa somente Cliente sem solicitações próprias (0.05375ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.384792

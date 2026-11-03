@@ -1,6 +1,6 @@
 import "server-only";
 import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AuthError, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "./config.ts";
 
 export type Papel = "Cliente" | "Manutentor" | "Gestor";
@@ -12,10 +12,16 @@ export function createRequestClient(cookies: CookieMethodsServer) {
   return createServerClient(url, publishableKey, { cookies });
 }
 
+function missingSession(error: AuthError) {
+  return [400, 401, 403].includes(error.status ?? 0)
+    || error.name === "AuthSessionMissingError"
+    || ["user_not_found", "session_not_found", "refresh_token_not_found"].includes(error.code ?? "");
+}
+
 export async function obterIdentidade(client: SupabaseClient): Promise<Identidade | null> {
   const { data: { user }, error } = await client.auth.getUser();
   if (error) {
-    if ([400, 401, 403].includes(error.status ?? 0) || error.name === "AuthSessionMissingError" || ["user_not_found", "session_not_found", "refresh_token_not_found"].includes(error.code ?? "")) return null;
+    if (missingSession(error)) return null;
     throw new Error("Não foi possível verificar a sessão. Tente novamente em instantes.");
   }
   if (!user) return null;
