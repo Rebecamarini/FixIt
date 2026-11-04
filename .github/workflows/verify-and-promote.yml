@@ -91,4 +91,9 @@ jobs:
           : "${SUPABASE_PROJECT_ID:?Missing SUPABASE_PROJECT_ID secret}"
           : "${SUPABASE_DB_PASSWORD:?Missing SUPABASE_DB_PASSWORD secret}"
           test "$SUPABASE_PROJECT_ID" = gifqssocvuieagmndxwy
-          npx --no-install supabase db push --project-ref "$SUPABASE_PROJECT_ID" --skip-vault --yes
+          # Link discovers the IPv4 session pooler; do not force a direct connection.
+          npx --no-install supabase link --project-ref "$SUPABASE_PROJECT_ID" --yes
+          npx --no-install supabase migration list --linked
+          npx --no-install supabase db push --linked --dry-run --skip-vault --yes
+          npx --no-install supabase db push --linked --skip-vault --yes
+          npx --no-install supabase migration list --linked

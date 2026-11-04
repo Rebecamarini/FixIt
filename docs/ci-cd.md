@@ -2,6 +2,14 @@
 
 [BT-006](https://trello.com/c/3W4Ajz0j) · [SPEC-001](https://trello.com/c/vWo76DXs).
 
+**Regressão operacional atual:** o CI da main `fee4699` passou, mas a
+[promoção de 2026-11-03](https://github.com/Rebecamarini/FixIt/actions/runs/41736489890)
+falhou na conexão IPv6. A [correção IPv4](https://trello.com/c/wtQP2dDr)
+está implementada na branch `integration/cicd-ipv4`; uma promoção elegível real, sua repetição e a
+comparação dos dados antes/depois ainda são necessárias. O histórico abaixo
+não comprova disponibilidade ou promoção atual. Veja a
+[validação da correção](validacao-cicd-ipv4.md).
+
 **Base técnica integrada e CI/CD cloud comprovado em 2026-10-20.**
 Os [PRs #1](https://github.com/Rebecamarini/FixIt/pull/1) e
 [#3](https://github.com/Rebecamarini/FixIt/pull/3) estão integrados em `main`.
@@ -52,11 +60,32 @@ simultaneamente por outra pessoa/processo, nem altere `--local` para cloud.
 
 O job **Promote pending migrations** depende do sucesso de **CI** nessa mesma
 execução e só roda no evento push de `main`. Ambos fazem checkout explícito de
-`github.sha`. PRs não recebem secrets de deploy. O comando remoto é somente:
+`github.sha`. PRs não executam o job com secrets de deploy. Após conferir os
+três secrets e a referência fixa, a sequência remota é:
 
 ```sh
-npx --no-install supabase db push --project-ref "$SUPABASE_PROJECT_ID" --skip-vault --yes
+npx --no-install supabase link --project-ref "$SUPABASE_PROJECT_ID" --yes
+npx --no-install supabase migration list --linked
+npx --no-install supabase db push --linked --dry-run --skip-vault --yes
+npx --no-install supabase db push --linked --skip-vault --yes
+npx --no-install supabase migration list --linked
 ```
+
+O vínculo é criado no runner desta execução. A CLI descobre o pooler; não
+configure host/região manualmente nem use `--skip-pooler`, que força conexão
+direta. O [pooler compartilhado em modo sessão](https://supabase.com/docs/guides/database/connecting-to-postgres#shared-pooler-session-mode)
+oferece a alternativa IPv4 gratuita. O `db push --linked` consome esse vínculo,
+em vez de selecionar novamente o projeto pela referência no próprio push.
+Os flags foram conferidos no `--help` da CLI 2.121.0; a prova de conectividade
+efetiva continua sendo a promoção real, não a leitura do help.
+
+O histórico anterior e o dry-run mostram as pendências previstas; o histórico
+posterior confirma as versões aplicadas. Falha em qualquer comando interrompe
+o passo antes dos comandos seguintes. Divergência de histórico deve ser
+investigada: não reparar versões nem habilitar `--include-all` para forçar
+sucesso. Ausência de secrets falha antes de conectar; presença não comprova
+validade. `SUPABASE_DB_PASSWORD` é passado pelo ambiente, sem argumento com
+senha nem prompt interativo.
 
 O workflow recusa referência diferente de `gifqssocvuieagmndxwy`. Aplica somente
 migrations pendentes, sem seeds, roles ou atualização de Vault. Não faz reset,
@@ -70,7 +99,10 @@ um pendente por grupo e pode substituir o pendente. A ordem dos pushes não
 garante a ordem das promoções. Portanto nem todo commit intermediário
 necessariamente é promovido. Não execute outro workflow ou deploy manual em
 paralelo; eles precisam respeitar a mesma coordenação. Um timeout/falha exige
-inspecionar o histórico antes de repetir, sem reset remoto.
+inspecionar o histórico antes de repetir, sem reset remoto. Antes de um rerun,
+confira se uma versão mais recente já foi promovida; não promova um SHA antigo
+fora de ordem. Reruns conservam o evento, a referência e o SHA originais, e não
+incorporam uma correção de workflow feita em commit posterior.
 
 ## Ativação por mantenedor com acesso
 
