@@ -3,6 +3,13 @@
 2026-10-18 · [BT-006](https://trello.com/c/3W4Ajz0j),
 [SPEC-001](https://trello.com/c/vWo76DXs).
 
+**Recuperação operacional — 2026-11-04:** o [PR #17](https://github.com/Rebecamarini/FixIt/pull/17)
+integrou a correção da conexão pelo pooler. CI e promoção da main `69937d5`
+passaram na [execução real](https://github.com/Rebecamarini/FixIt/actions/runs/41934169937),
+com oito migrations remotas e dados existentes preservados. A
+[validação da correção](validacao-cicd-ipv4.md) distingue esta prova da
+regressão IPv6 posterior ao aceite histórico registrado abaixo.
+
 **Atualização de 2026-10-20:** o PR #1 foi integrado à `main`, com duas
 promoções elegíveis aprovadas e dados cloud preparados/repetidos sem duplicação.
 O [registro remoto detalhado](ci-cd.md#promoções-e-dados-compartilhados--2026-10-20)

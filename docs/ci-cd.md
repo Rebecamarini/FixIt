@@ -2,13 +2,14 @@
 
 [BT-006](https://trello.com/c/3W4Ajz0j) · [SPEC-001](https://trello.com/c/vWo76DXs).
 
-**Regressão operacional atual:** o CI da main `fee4699` passou, mas a
-[promoção de 2026-11-03](https://github.com/Rebecamarini/FixIt/actions/runs/41736489890)
-falhou na conexão IPv6. A [correção IPv4](https://trello.com/c/wtQP2dDr)
-está implementada na branch `integration/cicd-ipv4`; uma promoção elegível real, sua repetição e a
-comparação dos dados antes/depois ainda são necessárias. O histórico abaixo
-não comprova disponibilidade ou promoção atual. Veja a
-[validação da correção](validacao-cicd-ipv4.md).
+**Regressão IPv6 corrigida em 2026-11-04:** o PR #17 foi integrado na main
+`69937d5`. O [CI/CD real](https://github.com/Rebecamarini/FixIt/actions/runs/41934169937)
+aprovou o mesmo SHA e aplicou somente as três migrations pendentes, elevando
+o histórico cloud de cinco para oito versões. A comparação por registro e
+tabela preservou quatro contas/perfis, 43 solicitações/eventos e dois
+setores/categorias. Consulte a [evidência e seus limites](validacao-cicd-ipv4.md)
+e o [cartão da correção](https://trello.com/c/wtQP2dDr) para o acompanhamento
+da repetição. A falha de `fee4699` abaixo é histórica.
 
 **Base técnica integrada e CI/CD cloud comprovado em 2026-10-20.**
 Os [PRs #1](https://github.com/Rebecamarini/FixIt/pull/1) e
