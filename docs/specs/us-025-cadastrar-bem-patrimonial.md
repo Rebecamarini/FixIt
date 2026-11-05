@@ -140,6 +140,6 @@ Esta spec sintetiza a entrevista aprovada e substitui o registro provisório no 
 
 As escolhas do usuário prevalecem sobre os critérios históricos: marca e modelo deixam de ser obrigatórios; o código é gerado automaticamente; disponibilidade para consulta/vinculação não amplia a US-025 para as histórias seguintes. Os demais campos opcionais continuam no formulário.
 
-A avaliação inicial de prontidão do cartão é histórica: as lacunas de escopo e critérios foram resolvidas nesta entrevista. A tarefa ainda não possui implementação nem aceite funcional comprovado. Atribuição permanece sem responsável até definição da equipe.
+A avaliação inicial de prontidão do cartão é histórica: as lacunas de escopo e critérios foram resolvidas nesta entrevista. Ao encerrar a especificação, ainda não havia implementação ou aceite funcional comprovado; o estado posterior de implementação, publicação e promoção deve ser consultado no cartão. Atribuição humana permanece sem responsável até definição da equipe.
 
 Não há novo ADR: as escolhas seguem a arquitetura vigente e estão documentadas nesta spec e no glossário. O estado ready-for-agent registrava especificação suficiente; o pedido separado com implement-spec autorizou a implementação local nesta sessão. Depois da validação, em 2026-11-05, o usuário autorizou a publicação do PR e o merge condicionado à aprovação dos checks. Evidências de publicação e promoção ficam no cartão.
