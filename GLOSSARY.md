@@ -24,7 +24,17 @@ Usuário em cujo nome uma solicitação de manutenção é feita. Pode ser difer
 Usuário que efetivamente registra a solicitação. Em pedidos feitos pelo Gestor em nome de outra pessoa, a autoria do envio permanece com o Gestor.
 
 **Bem patrimonial**:
-Item do inventário da instituição, identificado por código único e passível de vínculo com solicitações.
+Item individual do inventário da instituição, identificado por código único e passível de vínculo com solicitações. Bens com a mesma descrição e localização continuam sendo itens distintos, cada um com seu próprio código.
+
+**Código patrimonial**:
+Identificação única de um bem no inventário, gerada pelo FixIt. Não depende de uma etiqueta ou numeração previamente atribuída pela instituição.
+Permanece com o mesmo bem e não é reutilizada, mesmo após arquivamento.
+
+**Localização do bem**:
+Descrição do lugar onde um bem patrimonial se encontra, como prédio, sala ou endereço. Não equivale ao setor responsável pelo atendimento de uma solicitação.
+
+**Término da garantia**:
+Data até a qual um bem patrimonial possui garantia. Pode ser conhecida mesmo quando a data de aquisição não está disponível.
 
 **Histórico da solicitação**:
 Registro cronológico das alterações relevantes de uma solicitação, preservando data e autoria.
