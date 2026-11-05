@@ -33,6 +33,7 @@ export default async function Home() {
         <p><Link href="/solicitacoes/nova">Nova solicitação</Link></p>
         <p><Link href="/conta/perfil">Meu perfil</Link></p>
         {gestor && <p><Link href="/usuarios">Gerenciar usuários</Link></p>}
+        {gestor && <p><Link href="/patrimonios/novo">Cadastrar bem</Link></p>}
         <LogoutForm />
       </section> : <nav aria-label="Acesso"><Link href="/conta/entrar">Entrar</Link>{" · "}<Link href="/conta/cadastrar">Criar conta</Link></nav>}
       <section className={styles.connection} aria-labelledby="connection-title">

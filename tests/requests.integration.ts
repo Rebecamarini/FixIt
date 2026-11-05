@@ -93,7 +93,16 @@ test("uma falha real no histórico desfaz a criação da solicitação", async (
   const client = createRequestClient(cookieJar());
   const signup = await client.auth.signUp(uniqueSignup());
   assert.equal(signup.error, null); assert.ok(signup.data.user);
-  const sql = (input: string) => execFileSync("sg", ["docker", "-c", "docker exec -i supabase_db_fixit psql -U postgres -d postgres -v ON_ERROR_STOP=1"], { input, stdio: ["pipe", "pipe", "pipe"] });
+  const sql = (input: string) => {
+    const args = ["exec", "-i", "supabase_db_fixit", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"];
+    try { return execFileSync("docker", args, { input, stdio: ["pipe", "pipe", "pipe"] }); }
+    catch (error) {
+      // Linux sessions opened before joining the Docker group may need sg.
+      if (process.platform !== "linux" || !(error instanceof Error) || !("stderr" in error)
+        || !/permission denied/i.test(String(error.stderr))) throw error;
+      return execFileSync("sg", ["docker", "-c", "docker " + args.join(" ")], { input, stdio: ["pipe", "pipe", "pipe"] });
+    }
+  };
   const assunto = `Falha atômica ${signup.data.user.id}`;
   try {
     // Falha downstream real: uma constraint temporária recusa o evento deste autor.
