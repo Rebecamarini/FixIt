@@ -30,6 +30,9 @@ Item individual do inventário da instituição, identificado por código único
 Identificação única de um bem no inventário, gerada pelo FixIt. Não depende de uma etiqueta ou numeração previamente atribuída pela instituição.
 Permanece com o mesmo bem e não é reutilizada, mesmo após arquivamento.
 
+**Bem ativo**:
+Bem patrimonial que não foi arquivado. Sua condição ativa independe do estado de conservação; um bem classificado como Péssimo pode continuar ativo.
+
 **Localização do bem**:
 Descrição do lugar onde um bem patrimonial se encontra, como prédio, sala ou endereço. Não equivale ao setor responsável pelo atendimento de uma solicitação.
 

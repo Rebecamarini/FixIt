@@ -11,12 +11,14 @@ export default async function Home() {
   const connection = await checkConnection();
   let nome: string | null = null;
   let gestor = false;
+  let consultaPatrimonio = false;
   let sessionError = false;
   try {
     const client = await createSessionClient();
     const identidade = await obterIdentidade(client);
     if (identidade) {
       gestor = identidade.papel === "Gestor";
+      consultaPatrimonio = gestor || identidade.papel === "Manutentor";
       const profile = await client.from("perfis").select("nome").eq("id", identidade.id).single();
       if (profile.error) throw profile.error;
       nome = profile.data.nome;
@@ -33,6 +35,7 @@ export default async function Home() {
         <p><Link href="/solicitacoes/nova">Nova solicitação</Link></p>
         <p><Link href="/conta/perfil">Meu perfil</Link></p>
         {gestor && <p><Link href="/usuarios">Gerenciar usuários</Link></p>}
+        {consultaPatrimonio && <p><Link href="/patrimonios">Consultar bens</Link></p>}
         {gestor && <p><Link href="/patrimonios/novo">Cadastrar bem</Link></p>}
         <LogoutForm />
       </section> : <nav aria-label="Acesso"><Link href="/conta/entrar">Entrar</Link>{" · "}<Link href="/conta/cadastrar">Criar conta</Link></nav>}
