@@ -1,0 +1,16 @@
+.main { width: min(100% - 2rem, 64rem); margin: auto; padding: clamp(1.5rem, 5vw, 4rem) 0; }
+.brand { color: #075b72; font-size: 1.2rem; font-weight: 750; }
+.search { display: grid; gap: .5rem; }
+.search div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.search input { min-width: 0; flex: 1; padding: .65rem; font: inherit; }
+.search button { padding: .65rem 1rem; font: inherit; cursor: pointer; }
+.list { display: grid; gap: 1rem; padding: 0; list-style: none; }
+.card { border: 1px solid #c5d4db; border-radius: .75rem; padding: 1.25rem; background: white; overflow-wrap: anywhere; }
+.card h2 { margin-top: 0; font-size: 1.15rem; }
+.card p, .card dd { white-space: pre-wrap; }
+.card dl, dl.card { display: grid; gap: 1rem; }
+.card dt { font-weight: 700; color: #4b6069; }
+.card dd { margin: .25rem 0 0; }
+.pagination { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.pagination [aria-current] { font-weight: 750; text-decoration: underline; }
+.pagination p { flex-basis: 100%; }
