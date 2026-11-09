@@ -1,0 +1,4 @@
+.comparison { max-width: 100%; overflow-x: auto; }
+.comparison table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.comparison th, .comparison td { padding: .6rem; border: 1px solid #c5d4db; text-align: left; vertical-align: top; overflow-wrap: anywhere; white-space: pre-wrap; }
+.comparison caption { text-align: left; margin-bottom: .5rem; }

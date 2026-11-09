@@ -17,3 +17,16 @@ export function ErroConsulta({ erro, voltar }: { erro: string; voltar: string })
     <p><Link href="/">Voltar ao início</Link></p>
   </TelaPatrimonio>;
 }
+
+const mensagensResultado: Record<string, string> = {
+  salvo: 'Alterações salvas.',
+  sem_alteracoes_recuperado: 'Resultado recuperado: a tentativa original não tinha alterações. Os dados abaixo refletem a consulta atual.',
+  salvo_recuperado: 'Edição confirmada. O resultado da tentativa foi recuperado; os dados abaixo refletem a consulta atual.',
+  arquivado: 'Bem arquivado.',
+  arquivado_recuperado: 'Arquivamento confirmado. O resultado da tentativa foi recuperado.',
+  ja_arquivado: 'O bem já foi arquivado por outro Gestor.',
+};
+export function AvisoResultado({ resultado }: { resultado?: string | string[] }) {
+  const message = typeof resultado === 'string' ? mensagensResultado[resultado] : undefined;
+  return message ? <p role="status">{message}</p> : null;
+}

@@ -33,6 +33,9 @@ Permanece com o mesmo bem e não é reutilizada, mesmo após arquivamento.
 **Bem ativo**:
 Bem patrimonial que não foi arquivado. Sua condição ativa independe do estado de conservação; um bem classificado como Péssimo pode continuar ativo.
 
+**Bem arquivado**:
+Bem patrimonial retirado do inventário ativo, com dados e vínculos históricos preservados. Seu arquivamento não encerra solicitações de manutenção associadas.
+
 **Localização do bem**:
 Descrição do lugar onde um bem patrimonial se encontra, como prédio, sala ou endereço. Não equivale ao setor responsável pelo atendimento de uma solicitação.
 
