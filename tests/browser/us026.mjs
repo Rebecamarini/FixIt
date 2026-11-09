@@ -73,7 +73,7 @@ try {
       await p.goto(origin);
       sql("create or replace function public.us026_listar_bens(busca text default '', pagina bigint default 1) returns jsonb language plpgsql stable security invoker set search_path = '' as $$ begin raise exception 'Falha simulada de leitura'; end; $$");
       await p.reload();
-      await p.getByRole('alert').waitFor();
+      await p.getByText('Não foi possível consultar os bens. Tente novamente em instantes.', { exact: true }).waitFor();
       assert.equal(p.url(), origin);
       sql(restore);
       await p.getByRole('link', { name: 'Tentar novamente' }).click();

@@ -3,14 +3,15 @@ import Link from 'next/link';
 import { createSessionClient } from '../../server/session';
 import { listarBens } from '../../server/asset-query';
 import { consultaBens, listaBensUrl, parametrosBens, type ConsultaBens } from '../../lib/asset-navigation';
-import { TelaPatrimonio, ErroConsulta } from './ui';
+import { TelaPatrimonio, ErroConsulta, AvisoResultado } from './ui';
 import styles from './page.module.css';
 
 export const metadata: Metadata = { title: 'Consultar bens | FixIt' };
 export const dynamic = 'force-dynamic';
 
-export default async function ConsultarBens({ searchParams }: { searchParams: Promise<ConsultaBens> }) {
-  const { busca, pagina } = consultaBens(await searchParams);
+export default async function ConsultarBens({ searchParams }: { searchParams: Promise<ConsultaBens & { resultado?: string | string[] }> }) {
+  const consulta = await searchParams;
+  const { busca, pagina } = consultaBens(consulta);
   const voltar = listaBensUrl(busca, pagina);
   let resultado;
   try { resultado = await listarBens(await createSessionClient(), busca, pagina); }
@@ -19,6 +20,7 @@ export default async function ConsultarBens({ searchParams }: { searchParams: Pr
   const { itens, total, pagina: atual } = resultado.data;
   const paginas = Math.max(1, Math.ceil(total / 10));
   return <TelaPatrimonio titulo="Consultar bens">
+    <AvisoResultado resultado={consulta.resultado} />
     <form action="/patrimonios" method="get" className={styles.search}>
       <label htmlFor="busca">Pesquisar por código</label>
       <div><input id="busca" name="busca" defaultValue={busca} placeholder="Código ou trecho do código" /><button type="submit">Pesquisar</button></div>

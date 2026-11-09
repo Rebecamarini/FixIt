@@ -55,3 +55,11 @@ function errosDatas(values: PreenchimentoBem, hoje: string): ErrosBem {
 export function errosBem(values: PreenchimentoBem, hoje = hojeBem()): ErrosBem {
   return { ...errosTextos(values), ...errosDatas(values, hoje) };
 }
+
+export function normalizarBem(input: unknown): PreenchimentoBem | null {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const raw = input as Record<string, unknown>;
+  if (Object.keys(raw).some(key => !camposBem.some(([field]) => field === key))) return null;
+  if (camposBem.some(([key]) => typeof raw[key] !== 'string')) return null;
+  return Object.fromEntries(camposBem.map(([key]) => [key, (raw[key] as string).trim()])) as PreenchimentoBem;
+}

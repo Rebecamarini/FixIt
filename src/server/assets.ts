@@ -1,7 +1,7 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { obterIdentidade } from './identity.ts';
-import { camposBem, errosBem, type PreenchimentoBem, type ErrosBem } from '../lib/asset-form.ts';
+import { normalizarBem, errosBem, type PreenchimentoBem, type ErrosBem } from '../lib/asset-form.ts';
 
 type ConfirmacaoBem = {
   id: string; codigo: string; descricao: string; localizacao: string; estado_conservacao: string;
@@ -13,14 +13,6 @@ export type ResultadoBem = { confirmation?: ConfirmacaoBem; errors?: ErrosBem; m
 const uncertain: ResultadoBem = { retry: true, message: 'Não foi possível confirmar o cadastro. O bem pode estar registrado. Use Conferir cadastro.' };
 const denied: ResultadoBem = { retry: true, message: 'Sua sessão mudou ou terminou. Entre novamente com a mesma conta de Gestor em outra aba.' };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function normalizar(input: unknown): PreenchimentoBem | null {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
-  const raw = input as Record<string, unknown>;
-  if (Object.keys(raw).some(key => !camposBem.some(([field]) => field === key))) return null;
-  if (camposBem.some(([key]) => typeof raw[key] !== 'string')) return null;
-  return Object.fromEntries(camposBem.map(([key]) => [key, (raw[key] as string).trim()])) as PreenchimentoBem;
-}
 
 async function gravarBem(client: SupabaseClient, values: PreenchimentoBem, tentativa: string, identidade: string): Promise<ResultadoBem> {
     const { data, error } = await client.rpc('us025_cadastrar_bem', { dados: values, tentativa, identidade });
@@ -37,7 +29,7 @@ export async function cadastrarBem(client: SupabaseClient, input: unknown, tenta
     const identity = await obterIdentidade(client);
     if (!identity || identity.id !== identidadeEsperada || identity.papel !== 'Gestor') return denied;
     if (typeof tentativa !== 'string' || !uuid.test(tentativa)) return { message: 'Tentativa de cadastro inválida.' };
-    const values = normalizar(input);
+    const values = normalizarBem(input);
     if (!values) return { message: 'Preenchimento inválido.' };
     const errors = errosBem(values);
     if (Object.keys(errors).length) return { errors, message: 'Confira os campos indicados.' };
