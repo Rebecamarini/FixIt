@@ -1,28 +1,68 @@
+
 import { enviarSolicitacao } from "../../../server/request-submission.ts";
 import FormularioSolicitacao from "./form";
 import { redirect } from "next/navigation";
 import { obterIdentidade } from "../../../server/identity.ts";
 import { createSessionClient } from "../../../server/session.ts";
-import styles from "../../page.module.css";
+
+import Sidebar from "../../../components/cliente/Sidebar";
+import Header from "../../../components/cliente/Header";
+
+import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function NovaSolicitacaoPage() {
-  const identidade = await obterIdentidade(await createSessionClient());
-  if (!identidade) redirect("/conta/entrar");
+  const identidade = await obterIdentidade(
+    await createSessionClient()
+  );
+
+  if (!identidade) {
+    redirect("/conta/entrar");
+  }
 
   const autorId = identidade.id;
+
   async function enviar(input: unknown, tentativa: string) {
-    'use server';
+    "use server";
     return enviarSolicitacao(input, tentativa, autorId);
   }
 
+  const client = await createSessionClient();
+
+  const { data: perfil } = await client
+    .from("perfis")
+    .select("nome")
+    .eq("id", identidade.id)
+    .single();
+
+  const nome = perfil?.nome || "Usuário";
+
   return (
-    <main className={styles.main}>
-      <p className={styles.brand}>FixIt</p>
-      <h1>Nova solicitação de manutenção</h1>
-      <p>Inicie aqui um pedido de manutenção para informar um problema que precisa de atendimento.</p>
-      <FormularioSolicitacao papel={identidade.papel} enviar={enviar} />
-    </main>
+    <div className={styles.container}>
+      <Sidebar />
+
+      <div className={styles.principal}>
+        <Header nome={nome} />
+
+        <main className={styles.conteudo}>
+          <p className={styles.subtitulo}>
+            FixIt / MVP acadêmico
+          </p>
+
+          <h1>Abrir chamado</h1>
+
+          <p className={styles.descricao}>
+            Informe o problema identificado.
+            O gestor avaliará o atendimento.
+          </p>
+
+          <FormularioSolicitacao
+            papel={identidade.papel}
+            enviar={enviar}
+          />
+        </main>
+      </div>
+    </div>
   );
 }
