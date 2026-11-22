@@ -1,105 +1,57 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createSessionClient } from "../../server/session";
-import { listarSolicitacoes, type ResumoSolicitacao } from "../../server/requests";
-import { criarPaginacao, interpretarPagina, obterEstadoListagem, type EstadoListagem } from "./listagem";
+import { carregarConta, carregarResumos, carregarLinhas } from "../../server/client-view";
+import { filtrarSolicitacoes } from "../../lib/client-requests";
+import { interpretarPagina, criarPaginacao } from "./listagem";
+import { TAMANHO_PAGINA_SOLICITACOES } from "../../server/request-pagination";
+import ClienteLayout from "../../components/cliente/ClienteLayout";
+import TabelaChamados from "../../components/cliente/TabelaChamados";
+import layout from "../../components/cliente/ClienteLayout.module.css";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Minhas solicitações | FixIt" };
 export const dynamic = "force-dynamic";
+type Parametros = { pagina?: string | string[]; busca?: string; estado?: string };
 
-type PageProps = {
-  searchParams: Promise<{ pagina?: string | string[] }>;
-};
+export default async function MinhasSolicitacoes({ searchParams }: { searchParams: Promise<Parametros> }) {
+  const parametros = await searchParams;
+  const busca = typeof parametros.busca === "string" ? parametros.busca : "";
+  const estado = typeof parametros.estado === "string" ? parametros.estado : "";
+  const pagina = interpretarPagina(parametros.pagina);
+  const { client, identidade, nome } = await carregarConta();
+  if (identidade.papel !== "Cliente") return <main><h1>Acesso restrito</h1><p>Esta área é exclusiva para Clientes.</p><Link href="/">Voltar ao início</Link></main>;
+  const itens = await carregarResumos(client);
+  const pesquisaveis = busca.trim() ? await carregarLinhas(client, itens, nome) : [];
+  const locais = new Map(pesquisaveis.map(item => [item.id, item.local]));
+  const filtrados = filtrarSolicitacoes(itens, busca, estado, locais);
+  const offset = (pagina - 1) * TAMANHO_PAGINA_SOLICITACOES;
+  const selecionados = filtrados.slice(offset, offset + TAMANHO_PAGINA_SOLICITACOES);
+  const linhas = busca.trim()
+    ? selecionados.map(item => pesquisaveis.find(linha => linha.id === item.id)!)
+    : await carregarLinhas(client, selecionados, nome);
+  return <ClienteLayout nome={nome}>
+    <div className={layout.boasVindas}><div><h1>Meus chamados</h1><p>Consulte os atendimentos e acompanhe os status.</p></div><Link className={layout.novoChamado} href="/solicitacoes/nova">＋ Novo chamado</Link></div>
+    <TabelaChamados chamados={linhas} variante="todos">
+      <form className={styles.filtros} action="/solicitacoes">
+        <div className={styles.busca}><label htmlFor="busca">Pesquisar chamados</label><input id="busca" name="busca" type="search" defaultValue={busca} placeholder="ID, assunto, localização ou categoria" /></div>
+        <div className={styles.status}><label htmlFor="estado">Status</label><select id="estado" name="estado" defaultValue={estado}><option value="">Todos os status</option>{["Pendente", "Aprovada", "Em atendimento", "Concluída", "Descartada"].map(valor => <option key={valor}>{valor}</option>)}</select></div>
+        <button className={layout.novoChamado} type="submit">Pesquisar</button><Link href="/solicitacoes">Limpar filtros</Link>
+      </form>
+      <p className={styles.resultados} role="status">{filtrados.length} solicitações encontradas</p>
+      {!itens.length && <p>Nenhuma solicitação registrada. Quando você enviar uma solicitação, ela aparecerá aqui.</p>}
+      {!!filtrados.length && !linhas.length && <p>Esta página não possui solicitações. Retorne à página anterior.</p>}
+    </TabelaChamados>
+    <Paginacao pagina={pagina} total={filtrados.length} busca={busca} estado={estado} />
+  </ClienteLayout>;
+}
 
-const formatadorData = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
-
-export default async function MinhasSolicitacoes({ searchParams }: PageProps) {
-  const pagina = interpretarPagina((await searchParams).pagina);
-  const client = await createSessionClient();
-  const resultado = await listarSolicitacoes(client, pagina);
-
-  if (resultado.erro === "nao_autenticado") {
-    return <MensagemDeAcesso titulo="Sessão necessária">Entre no FixIt para consultar suas solicitações.</MensagemDeAcesso>;
-  }
-  if (resultado.erro === "nao_autorizado") {
-    return <MensagemDeAcesso titulo="Acesso restrito">Esta área é exclusiva para Clientes.</MensagemDeAcesso>;
-  }
-  if (!resultado.data) throw new Error("Não foi possível consultar as solicitações.");
-
-  const { itens, total } = resultado.data;
-  const estado = obterEstadoListagem(total, itens.length);
+function Paginacao({ pagina, total, busca, estado }: { pagina: number; total: number; busca: string; estado: string }) {
   const paginacao = criarPaginacao(pagina, total);
-
-  return (
-    <main className={styles.main}>
-      <header className={styles.header}>
-        <p className={styles.brand}>FixIt</p>
-        <h1>Minhas solicitações</h1>
-        <p>Acompanhe os pedidos de manutenção que você registrou.</p>
-      </header>
-
-      <ListaSolicitacoes estado={estado} itens={itens} />
-
-      {(paginacao.totalPaginas > 1 || pagina > 1) && (
-        <nav className={styles.pagination} aria-label="Paginação das solicitações">
-          {paginacao.anterior ? <Link href={`/solicitacoes?pagina=${paginacao.anterior}`}>Página anterior</Link> : <span> Página anterior </span>}
-          <p>Página {pagina} de {paginacao.totalPaginas || 1}</p>
-          {paginacao.proxima ? <Link href={`/solicitacoes?pagina=${paginacao.proxima}`}>Próxima página</Link> : <span>Próxima página</span>}
-        </nav>
-      )}
-    </main>
-  );
-}
-
-function MensagemDeAcesso({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  return (
-    <main className={styles.main}>
-      <p className={styles.brand}>FixIt</p>
-      <section className={styles.empty}>
-        <h1>{titulo}</h1>
-        <p>{children}</p>
-      </section>
-    </main>
-  );
-}
-
-function ListaSolicitacoes({ estado, itens }: { estado: EstadoListagem; itens: ResumoSolicitacao[] }) {
-  return estado === "vazio" ? (
-    <section className={styles.empty} aria-labelledby="empty-title">
-      <h2 id="empty-title">Nenhuma solicitação registrada</h2>
-      <p>Quando você enviar uma solicitação, ela aparecerá aqui.</p>
-    </section>
-  ) : estado === "pagina-vazia" ? (
-    <section className={styles.empty} aria-labelledby="page-empty-title">
-      <h2 id="page-empty-title">Esta página não possui solicitações</h2>
-      <p>Retorne a uma página anterior para continuar consultando seus pedidos.</p>
-    </section>
-  ) : (
-    <ul className={styles.list} aria-label="Solicitações próprias">
-      {itens.map((solicitacao) => (
-        <li key={solicitacao.id}>
-          <article className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div>
-                <p className={styles.identifier}>ID {solicitacao.id}</p>
-                <h2>{solicitacao.assunto}</h2>
-              </div>
-              <span className={styles.status}>{solicitacao.estado}</span>
-            </div>
-            <dl className={styles.summary}>
-              <div><dt>Categoria</dt><dd>{solicitacao.categoria.nome}</dd></div>
-              <div><dt>Data</dt><dd><time dateTime={solicitacao.criado_em}>{formatadorData.format(new Date(solicitacao.criado_em))}</time></dd></div>
-            </dl>
-            <Link className={styles.detailsLink} href={`/solicitacoes/${solicitacao.id}`}>
-              Abrir detalhes
-            </Link>
-          </article>
-        </li>
-      ))}
-    </ul>
-  );
+  const href = (valor: number) => `/solicitacoes?${new URLSearchParams({ busca, estado, pagina: String(valor) })}`;
+  if (paginacao.totalPaginas <= 1 && pagina <= 1) return null;
+  return <nav className={styles.pagination} aria-label="Paginação das solicitações">
+    {paginacao.anterior && <Link href={href(paginacao.anterior)}>Página anterior</Link>}
+    <p>Página {pagina} de {paginacao.totalPaginas || 1}</p>
+    {paginacao.proxima && <Link href={href(paginacao.proxima)}>Próxima página</Link>}
+  </nav>;
 }

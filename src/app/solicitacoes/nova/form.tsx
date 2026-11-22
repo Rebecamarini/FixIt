@@ -11,7 +11,7 @@ type FormState = Omit<ReturnType<typeof useRequestForm>, 'form' | 'cancelLink'>;
 
 export default function FormularioSolicitacao({ papel, enviar }: { papel: Papel; enviar: (input: unknown, tentativa: string) => Promise<EnvioSolicitacao> }) {
   const { form, cancelLink, ...state } = useRequestForm(enviar);
-  if (state.confirmation) return <Confirmation confirmation={state.confirmation} reset={state.reset} />;
+  if (state.confirmation) return <Confirmation confirmation={state.confirmation} reset={state.reset} cliente={papel === "Cliente"} />;
   return <>
     <form ref={form} className={styles.form} noValidate onSubmit={state.send}>
       <p>O autor do envio será você.</p>
@@ -31,7 +31,7 @@ export default function FormularioSolicitacao({ papel, enviar }: { papel: Papel;
   </>;
 }
 
-function Confirmation({ confirmation, reset }: { confirmation: NonNullable<EnvioSolicitacao['confirmation']>; reset: () => void }) {
+function Confirmation({ confirmation, reset, cliente }: { cliente: boolean; confirmation: NonNullable<EnvioSolicitacao['confirmation']>; reset: () => void }) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus(); }, []);
   return <section aria-labelledby="confirmation-title">
@@ -41,6 +41,7 @@ function Confirmation({ confirmation, reset }: { confirmation: NonNullable<Envio
     {confirmation.representacao && <><p>Solicitante: {confirmation.solicitante}</p><p>Autor do envio: {confirmation.autor}</p></>}
     <button type="button" onClick={reset}>Nova solicitação</button>
     <Link href="/">Voltar ao início</Link>
+    {cliente && <Link href={`/solicitacoes/${confirmation.id}`}>Acompanhar solicitação</Link>}
   </section>;
 }
 
