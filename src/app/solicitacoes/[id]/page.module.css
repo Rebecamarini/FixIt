@@ -157,3 +157,5 @@
   .informacoes { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .historico { padding-left: 6px; }
 }
+
+.descricao p, .historico p { white-space: pre-wrap; }

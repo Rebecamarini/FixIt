@@ -4,14 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutForm } from "../../app/conta/form";
 import styles from "./Sidebar.module.css";
-type SidebarProps = { inicioHref?: string; demonstracao?: boolean };
 
-export default function Sidebar({ inicioHref = "/", demonstracao = false }: SidebarProps) {
+export default function Sidebar() {
     const pathname = usePathname();
-    const solicitacoesHref = demonstracao ? "/demo/cliente/solicitacoes" : "/solicitacoes";
-    const novoHref = demonstracao ? "/demo/solicitacao" : "/solicitacoes/nova";
+    const solicitacoesHref = "/solicitacoes";
+    const novoHref = "/solicitacoes/nova";
     const itens = [
-        { href: demonstracao ? "/demo/cliente" : inicioHref, texto: "Visão geral", icone: "▦", ativo: pathname === (demonstracao ? "/demo/cliente" : inicioHref) },
+        { href: "/", texto: "Visão geral", icone: "▦", ativo: pathname === "/" },
         { href: solicitacoesHref, texto: "Meus chamados", icone: "▤", ativo: pathname.startsWith(solicitacoesHref) && pathname !== novoHref },
         { href: novoHref, texto: "Novo chamado", icone: "＋", ativo: pathname === novoHref },
     ];
@@ -39,7 +38,7 @@ export default function Sidebar({ inicioHref = "/", demonstracao = false }: Side
                 <p>Sistema de gerenciamento de manutenção</p>
             </div>
             <div className={styles.saida}>
-                {demonstracao ? <Link href="/conta/entrar">Sair</Link> : <LogoutForm />}
+                <LogoutForm />
             </div>
         </div>
     </aside>

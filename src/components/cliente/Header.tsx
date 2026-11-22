@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./Header.module.css";
 
@@ -12,9 +13,6 @@ export default function Header({ nome }: HeaderProps) {
 
   const paginas: Record<string, string> = {
     "/": "Visão geral",
-    "/demo/cliente": "Visão geral",
-    "/demo/cliente/solicitacoes": "Meus chamados",
-    "/demo/solicitacao": "Novo chamado",
     "/solicitacoes": "Meus chamados",
     "/solicitacoes/nova": "Novo chamado",
     "/conta/perfil": "Meu perfil",
@@ -29,7 +27,7 @@ export default function Header({ nome }: HeaderProps) {
             </div>
 
             <div className={styles.usuario}>
-            <span className={styles.nome}>Cliente · {nome}</span>
+            <Link href="/conta/perfil" className={styles.nome}>Cliente · {nome}</Link>
 
             <div className={styles.avatar} aria-hidden="true">
             {nome.charAt(0).toUpperCase()}

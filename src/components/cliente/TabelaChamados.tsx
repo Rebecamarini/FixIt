@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 import styles from "./TabelaChamados.module.css";
 
 export type Chamado = {
-  id: number;
+  id: string;
   assunto: string;
   local: string;
   solicitante: string;
   status: "Pendente" | "Aprovada" | "Em atendimento" | "Concluída" | "Descartada";
-  prioridade: "Não definida" | "Baixa" | "Média" | "Alta";
+  prioridade: string;
   /** Data no formato ISO YYYY-MM-DD. */
   data: string;
 };
@@ -16,7 +16,6 @@ export type Chamado = {
 type TabelaChamadosProps = {
   chamados: readonly Chamado[];
   variante?: "recentes" | "todos";
-  demonstracao?: boolean;
   children?: ReactNode;
 };
 
@@ -29,7 +28,7 @@ const classesStatus: Record<Chamado["status"], string> = {
 };
 
 function formatarData(data: string) {
-  return data.split("-").reverse().join("/");
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(data));
 }
 
 function LinhaChamado({ chamado, baseHref }: { chamado: Chamado; baseHref: string }) {
@@ -69,10 +68,10 @@ function CabecalhoTabela() {
   );
 }
 
-export default function TabelaChamados({ chamados, variante = "recentes", demonstracao = false, children }: TabelaChamadosProps) {
+export default function TabelaChamados({ chamados, variante = "recentes", children }: TabelaChamadosProps) {
   const recentes = variante === "recentes";
   const titulo = recentes ? "Chamados recentes" : "Meus chamados";
-  const baseHref = demonstracao ? "/demo/cliente/solicitacoes" : "/solicitacoes";
+  const baseHref = "/solicitacoes";
   return (
     <section className={styles.card} aria-label={titulo}>
       {recentes && (
